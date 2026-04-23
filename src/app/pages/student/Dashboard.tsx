@@ -44,6 +44,8 @@ import { getSubjectData, getSubjectConcepts, getSubjectHobbyExamples } from '../
 export default function Dashboard() {
   const navigate = useNavigate();
   const { learner, logout } = useLearner();
+  const subject = getSubjectData(learner?.subject || 'programming');
+  const recommendedLesson = subject?.lessons[0];
 
   const navItems = [
     { icon: <Home className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard', active: true },
@@ -93,29 +95,16 @@ export default function Dashboard() {
     },
   ];
 
-  const weakConcepts = [
-    { 
-      name: 'JavaScript Loops', 
-      status: 'needs-review', 
-      confidence: 45,
-      lastStudied: '3 days ago',
-      priority: 'high'
-    },
-    { 
-      name: 'Array Methods', 
-      status: 'in-progress', 
-      confidence: 60,
-      lastStudied: '1 day ago',
-      priority: 'medium'
-    },
-    { 
-      name: 'Async/Await', 
-      status: 'not-started', 
-      confidence: 20,
-      lastStudied: 'Not started',
-      priority: 'low'
-    },
-  ];
+  const weakConcepts = (subject?.concepts || [])
+    .filter((concept) => concept.status !== 'mastered')
+    .slice(0, 3)
+    .map((concept) => ({
+      name: concept.name,
+      status: concept.status,
+      confidence: concept.mastery,
+      lastStudied: concept.lastStudied || 'Not started',
+      priority: concept.priority || 'medium',
+    }));
 
   const upcomingSessions = [
     { 
@@ -353,21 +342,20 @@ export default function Dashboard() {
                     
                     <div className="flex-1 space-y-3">
                       <div>
-                        <h4 className="font-bold text-xl mb-2">JavaScript Functions Deep Dive</h4>
+                        <h4 className="font-bold text-xl mb-2">{recommendedLesson?.title || 'Your Next Lesson'}</h4>
                         <p className="text-gray-600">
-                          Master function declarations, expressions, and arrow functions with personalized gaming examples 
-                          tailored to your interests.
+                          {recommendedLesson?.description || 'Your next lesson is generated from your selected subject and saved learner profile.'}
                         </p>
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-gray-500">
                         <span className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-blue-500" />
-                          30 min
+                          {recommendedLesson?.duration || '30 min'}
                         </span>
                         <span className="flex items-center gap-2">
                           <Target className="w-4 h-4 text-purple-500" />
-                          Intermediate
+                          {recommendedLesson?.difficulty || 'Intermediate'}
                         </span>
                         <span className="flex items-center gap-2">
                           <Lightbulb className="w-4 h-4 text-yellow-500" />
@@ -388,19 +376,19 @@ export default function Dashboard() {
                         <div className="space-y-2 text-sm text-gray-700">
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Your diagnostic showed mastery in <strong>variables & data types</strong> (85% score)</span>
+                            <span>Your diagnostic and saved subject profile are shaping the next lesson suggestions</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Functions are the natural next step in your <strong>balanced pace</strong> learning path</span>
+                            <span>Your current pace is used to balance challenge and review</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>We'll use <strong>gaming analogies</strong> (health bars, power-ups) based on your interests</span>
+                            <span>Examples are matched to your hobbies from the saved learner profile</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Perfect timing: fits your <strong>afternoon study schedule</strong> and 30-min session preference</span>
+                            <span>The weekly schedule now comes from your onboarding preferences</span>
                           </div>
                         </div>
                       </div>

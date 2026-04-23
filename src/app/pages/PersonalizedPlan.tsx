@@ -6,14 +6,46 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Brain, Sparkles, Clock, Target, TrendingUp, Calendar, ArrowRight, CheckCircle, Zap, Heart, BookOpen, Flame } from 'lucide-react';
 import PersonaProfile from '../components/PersonaProfile';
+import { useLearner } from '../contexts/LearnerContext';
+import { generateLearningPlan } from '../utils/learnerApi';
+
+type GeneratedPlan = {
+  goal?: string;
+  subject?: string;
+  sessionsPerWeek?: number;
+  weeklyPlan?: Array<{ day: string; durationMinutes: number; focus: string; task: string }>;
+  personalization?: { hobbies?: string[]; studyTime?: string; pace?: string };
+  freeResources?: { wikipedia?: { title?: string; summary?: string; url?: string }; openLibraryBooks?: Array<{ title?: string; author?: string; url?: string }> };
+};
 
 export default function PersonalizedPlan() {
   const navigate = useNavigate();
+  const { learner, updateLearner } = useLearner();
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [plan, setPlan] = useState<GeneratedPlan | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Simulate AI generating plan with progress
+    const loadPlan = async () => {
+      if (!learner) {
+        setError('No learner profile found. Please sign up or log in again.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await generateLearningPlan(learner);
+        setPlan(response.plan as GeneratedPlan);
+        updateLearner({ generatedPlan: response.plan });
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Unable to generate plan right now.');
+      }
+    };
+
+    void loadPlan();
+
+    // Keep the progress animation while the backend request resolves.
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -77,6 +109,20 @@ export default function PersonalizedPlan() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50/30 to-pink-50/20 flex items-center justify-center p-6">
+        <Card className="max-w-xl w-full p-8 space-y-4 text-center shadow-2xl">
+          <h2 className="text-2xl font-bold text-gray-900">Plan generation failed</h2>
+          <p className="text-gray-600">{error}</p>
+          <Button onClick={() => navigate('/diagnostic')} className="w-full">
+            Go Back
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50/30 to-pink-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-8 py-8">
@@ -98,7 +144,7 @@ export default function PersonalizedPlan() {
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Personalized Learning Plan is Ready!</h1>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-              Based on your goals, pace, interests, and diagnostic results, we've created a unique AI-powered 
+              Based on your {plan?.subject || learner?.subject || 'learning preferences'}, pace, interests, and diagnostic results, we've created a unique AI-powered 
               learning path designed specifically for <strong>you</strong>.
             </p>
           </div>
@@ -122,10 +168,9 @@ export default function PersonalizedPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-xl mb-2">Your Learning Goal</h3>
-                <p className="text-lg font-semibold text-blue-600 mb-3">Exam Preparation</p>
+                <p className="text-lg font-semibold text-blue-600 mb-3">{plan?.goal || learner?.goal || 'Exam Preparation'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  We've prioritized topics likely to appear on your exam and front-loaded your weaker areas 
-                  (loops and functions) to give you more time to master them before test day.
+                  The backend analyzed your profile and created a plan around your current goals, subject, and diagnostic feedback.
                 </p>
               </div>
             </div>
@@ -138,10 +183,9 @@ export default function PersonalizedPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-xl mb-2">Time Commitment</h3>
-                <p className="text-lg font-semibold text-teal-600 mb-3">5 hours per week</p>
+                <p className="text-lg font-semibold text-teal-600 mb-3">{learner?.weeklyHours || 5} hours per week</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Your schedule fits perfectly with your availability. We've broken it into comfortable 
-                  30-minute sessions during your preferred afternoon study times.
+                  Your schedule matches your stored availability and is split into focused sessions.
                 </p>
               </div>
             </div>
@@ -154,10 +198,9 @@ export default function PersonalizedPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-xl mb-2">Learning Pace</h3>
-                <p className="text-lg font-semibold text-purple-600 mb-3">Balanced Approach</p>
+                <p className="text-lg font-semibold text-purple-600 mb-3">{plan?.personalization?.pace || learner?.pace || 'Balanced Approach'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Steady progress with good depth - not rushing through material, but moving at a comfortable 
-                  pace that ensures solid understanding.
+                  The backend is using your preferred pace to shape the difficulty and lesson flow.
                 </p>
               </div>
             </div>
@@ -170,10 +213,9 @@ export default function PersonalizedPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-xl mb-2">Personalization</h3>
-                <p className="text-lg font-semibold text-pink-600 mb-3">Gaming & Music Examples</p>
+                <p className="text-lg font-semibold text-pink-600 mb-3">{(plan?.personalization?.hobbies || learner?.hobbies || []).join(' & ') || 'Personalized Examples'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  All concepts will be explained using your interests. Functions become power-ups, 
-                  loops are like music tracks, and variables are game stats!
+                  Your interests are now part of the saved learning profile and will be used in examples.
                 </p>
               </div>
             </div>
@@ -191,26 +233,30 @@ export default function PersonalizedPlan() {
             </Badge>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
-            {['Monday', 'Wednesday', 'Friday'].map((day, index) => (
-              <div key={day} className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all">
+            {(plan?.weeklyPlan?.length ? plan.weeklyPlan : [
+              { day: 'Monday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Review your next lesson' },
+              { day: 'Wednesday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Practice with examples' },
+              { day: 'Friday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Take a quick self-check' },
+            ]).map((session, index) => (
+              <div key={`${session.day}-${index}`} className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="font-bold text-lg text-gray-900 mb-1">{day} Afternoon</div>
+                    <div className="font-bold text-lg text-gray-900 mb-1">{session.day} Afternoon</div>
                     <div className="text-sm text-gray-600">2:00 PM - 2:30 PM</div>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold shadow-lg">
-                    30
+                    {session.durationMinutes}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-gray-700 font-medium">Peak focus time</span>
+                  <span className="text-gray-700 font-medium">{session.task}</span>
                 </div>
               </div>
             ))}
           </div>
           <p className="text-sm text-gray-600 mt-6 text-center">
-            These times match your afternoon preference and historically show the best learning outcomes.
+            These sessions are generated from your saved learner profile and plan settings.
           </p>
         </Card>
 
@@ -254,6 +300,47 @@ export default function PersonalizedPlan() {
                 <span className="text-sm text-gray-700 leading-relaxed">{item.text}</span>
               </div>
             ))}
+          </div>
+        </Card>
+
+        <Card className="p-8 border-2 border-indigo-200 shadow-xl bg-gradient-to-br from-white to-indigo-50/40">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="w-6 h-6 text-indigo-600" />
+            <h3 className="text-2xl font-bold text-gray-900">Free Learning Resources</h3>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-5">
+            <div className="p-5 rounded-2xl bg-white border border-indigo-100 shadow-sm">
+              <p className="text-sm font-semibold text-indigo-600 mb-2">Wikipedia Summary</p>
+              <h4 className="text-lg font-bold text-gray-900 mb-2">{plan?.freeResources?.wikipedia?.title || 'Topic overview'}</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {plan?.freeResources?.wikipedia?.summary || 'A free summary from Wikipedia will appear here when your plan is generated.'}
+              </p>
+              {plan?.freeResources?.wikipedia?.url && (
+                <a className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:underline" href={plan.freeResources.wikipedia.url} target="_blank" rel="noreferrer">
+                  Open Wikipedia source
+                </a>
+              )}
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-indigo-100 shadow-sm">
+              <p className="text-sm font-semibold text-indigo-600 mb-2">Open Library Books</p>
+              <div className="space-y-3">
+                {(plan?.freeResources?.openLibraryBooks?.length ? plan.freeResources.openLibraryBooks : []).slice(0, 3).map((book, index) => (
+                  <div key={`${book.title}-${index}`} className="rounded-xl border border-gray-100 p-3">
+                    <div className="font-semibold text-gray-900">{book.title}</div>
+                    <div className="text-sm text-gray-600">{book.author}</div>
+                    {book.url && (
+                      <a className="text-sm font-medium text-indigo-600 hover:underline" href={book.url} target="_blank" rel="noreferrer">
+                        View book
+                      </a>
+                    )}
+                  </div>
+                ))}
+                {!plan?.freeResources?.openLibraryBooks?.length && (
+                  <p className="text-sm text-gray-500">Book suggestions will appear here when the backend returns results.</p>
+                )}
+              </div>
+            </div>
           </div>
         </Card>
 

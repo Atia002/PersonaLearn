@@ -6,10 +6,13 @@ import { Label } from '../../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Brain, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useLearner, defaultLearner } from '../../contexts/LearnerContext';
+import { registerLearner } from '../../utils/learnerApi';
 
 export default function SignUp() {
   const navigate = useNavigate();
   const { setLearner } = useLearner();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,23 +21,35 @@ export default function SignUp() {
     role: 'student'
   });
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Create learner profile with name and email
-    const newLearner = {
-      ...defaultLearner,
-      name: formData.name,
-      email: formData.email,
-    };
-    
-    setLearner(newLearner);
-    
-    // Navigate based on role
-    if (formData.role === 'student') {
-      navigate('/onboarding');
-    } else {
-      navigate('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await registerLearner({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        profile: defaultLearner,
+      });
+
+      setLearner({
+        ...defaultLearner,
+        id: response.learner.id,
+        name: response.learner.name,
+        email: response.learner.email,
+      });
+
+      if (formData.role === 'student') {
+        navigate('/onboarding');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to create your account.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,6 +121,11 @@ export default function SignUp() {
 
           {/* Form */}
           <form onSubmit={handleSignUp} className="space-y-6">
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
@@ -197,8 +217,8 @@ export default function SignUp() {
               </RadioGroup>
             </div>
 
-            <Button type="submit" size="lg" className="w-full h-12">
-              Create Account
+            <Button type="submit" size="lg" className="w-full h-12" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 

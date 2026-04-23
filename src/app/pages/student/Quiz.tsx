@@ -14,7 +14,7 @@ export default function Quiz() {
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answered, setAnswered] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
 
   // Get quiz questions based on learner's subject
@@ -41,10 +41,10 @@ export default function Quiz() {
     );
   }
 
-  const handleAnswer = (option: string) => {
+  const handleAnswer = (optionIndex: number) => {
     setAnswered(true);
-    setSelectedAnswer(option);
-    if (option === question.correctAnswer) {
+    setSelectedAnswer(optionIndex);
+    if (optionIndex === question.correctAnswer) {
       setScore(score + 1);
     }
   };
@@ -92,8 +92,8 @@ export default function Quiz() {
 
           <div className="space-y-3">
             {question.options.map((option, index) => {
-              const isCorrect = option === question.correctAnswer;
-              const isSelected = option === selectedAnswer;
+              const isCorrect = index === question.correctAnswer;
+              const isSelected = index === selectedAnswer;
               
               return (
                 <Card
@@ -107,7 +107,7 @@ export default function Quiz() {
                       ? 'border-2 border-red-500 bg-red-50'
                       : ''
                   }`}
-                  onClick={() => !answered && handleAnswer(option)}
+                  onClick={() => !answered && handleAnswer(index)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

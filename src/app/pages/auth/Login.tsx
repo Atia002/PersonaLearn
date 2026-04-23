@@ -6,16 +6,40 @@ import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Brain, Mail, Lock, ArrowRight } from 'lucide-react';
+import { useLearner, defaultLearner } from '../../contexts/LearnerContext';
+import { loginLearner } from '../../utils/learnerApi';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { setLearner } = useLearner();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - go to dashboard
-    navigate('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await loginLearner({ email, password });
+
+      setLearner({
+        ...defaultLearner,
+        id: response.learner.id,
+        name: response.learner.name,
+        email: response.learner.email,
+        ...(response.learner.profile || {}),
+      });
+
+      const hasOnboardingData = Boolean(response.learner.profile?.goal && response.learner.profile?.subject);
+      navigate(hasOnboardingData ? '/dashboard' : '/onboarding');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to sign in.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,6 +66,11 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -91,8 +120,8 @@ export default function Login() {
               </Button>
             </div>
 
-            <Button type="submit" size="lg" className="w-full h-12">
-              Sign In
+            <Button type="submit" size="lg" className="w-full h-12" disabled={loading}>
+              {loading ? 'Signing In...' : 'Sign In'}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 

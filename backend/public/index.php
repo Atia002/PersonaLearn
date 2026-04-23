@@ -148,6 +148,44 @@ if ($method === 'POST' && $path === '/api/plans/generate') {
     exit;
 }
 
+if ($method === 'PUT' && preg_match('#^/api/learners/([^/]+)$#', $path, $matches) === 1) {
+    $id = $matches[1];
+    $payload = Request::json();
+    $users = $usersStore->all();
+
+    foreach ($users as $index => $user) {
+        if (($user['id'] ?? '') !== $id) {
+            continue;
+        }
+
+        $profile = is_array($payload['profile'] ?? null) ? $payload['profile'] : [];
+
+        $users[$index]['name'] = trim((string) ($payload['name'] ?? $user['name'] ?? '')) ?: ($user['name'] ?? '');
+        $users[$index]['email'] = strtolower(trim((string) ($payload['email'] ?? $user['email'] ?? '')));
+        if (isset($payload['password']) && (string) $payload['password'] !== '') {
+            $users[$index]['passwordHash'] = password_hash((string) $payload['password'], PASSWORD_DEFAULT);
+        }
+
+        $users[$index]['profile'] = array_merge((array) ($user['profile'] ?? []), $profile);
+        $users[$index]['updatedAt'] = gmdate('c');
+        $usersStore->putAll($users);
+
+        Response::json([
+            'ok' => true,
+            'learner' => [
+                'id' => $users[$index]['id'] ?? '',
+                'name' => $users[$index]['name'] ?? '',
+                'email' => $users[$index]['email'] ?? '',
+                'profile' => $users[$index]['profile'] ?? [],
+            ],
+        ]);
+        exit;
+    }
+
+    Response::error('Learner not found.', 404);
+    exit;
+}
+
 if ($method === 'GET' && $path === '/api/resources/search') {
     $topic = Request::query('topic', 'Computer programming');
 
@@ -197,6 +235,6 @@ function setCorsHeaders(): void
 {
     $allowedOrigin = getenv('API_ALLOWED_ORIGIN') ?: 'http://localhost:5173';
     header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
 }

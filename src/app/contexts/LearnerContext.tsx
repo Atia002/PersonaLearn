@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface LearnerProfile {
+  id?: string;
   name: string;
   email: string;
   goal: string;
@@ -21,6 +22,7 @@ export interface LearnerProfile {
   masteryScores: { [key: string]: number };
   studyStreak: number;
   totalStudyMinutes: number;
+  generatedPlan?: unknown;
 }
 
 interface LearnerContextType {
@@ -59,7 +61,15 @@ export function LearnerProvider({ children }: { children: ReactNode }) {
   const [learner, setLearnerState] = useState<LearnerProfile | null>(() => {
     // Load from localStorage on init
     const stored = localStorage.getItem('personalearn_learner');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(stored) as LearnerProfile;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {

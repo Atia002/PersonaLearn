@@ -26,11 +26,13 @@ import HobbiesStep from './steps/HobbiesStep';
 import ConfidenceStep from './steps/ConfidenceStep';
 import ReviewStep from './steps/ReviewStep';
 import { useLearner } from '../../contexts/LearnerContext';
+import { updateLearnerProfile } from '../../utils/learnerApi';
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const { learner, updateLearner } = useLearner();
   const [currentStep, setCurrentStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     goal: learner?.goal || '',
     reason: learner?.reason || '',
@@ -62,12 +64,12 @@ export default function Onboarding() {
     { icon: <Check className="w-5 h-5" />, label: 'Review' }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       // Save all onboarding data to learner profile before going to diagnostic
-      updateLearner({
+      const updates = {
         goal: formData.goal,
         reason: formData.reason,
         subject: formData.subject as 'programming' | 'writing' | 'science',
@@ -81,7 +83,27 @@ export default function Onboarding() {
         confidence: formData.confidence,
         explanationLevel: formData.explanationLevel,
         supportMode: formData.supportMode,
-      });
+      };
+
+      updateLearner(updates);
+
+      if (learner?.id) {
+        setSaving(true);
+        try {
+          const response = await updateLearnerProfile(learner.id, {
+            profile: updates,
+          });
+
+          updateLearner({
+            ...(response.learner.profile || {}),
+            name: response.learner.name,
+            email: response.learner.email,
+          });
+        } finally {
+          setSaving(false);
+        }
+      }
+
       navigate('/diagnostic');
     }
   };
@@ -274,7 +296,7 @@ export default function Onboarding() {
                       disabled={!isStepComplete()}
                       className="gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50"
                     >
-                      Continue
+                          {saving ? 'Saving...' : 'Continue'}
                       <ArrowRight className="w-5 h-5" />
                     </Button>
                   </>

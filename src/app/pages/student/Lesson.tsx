@@ -29,14 +29,21 @@ import {
 import { useNavigate } from 'react-router';
 import HobbyExampleCard from '../../components/HobbyExampleCard';
 import PersonaProfile from '../../components/PersonaProfile';
+import { useLearner } from '../../contexts/LearnerContext';
+import { getSubjectData } from '../../data/subjectData';
 
 export default function Lesson() {
   const navigate = useNavigate();
+  const { learner } = useLearner();
+  const subject = getSubjectData(learner?.subject || 'programming');
+  const lessonTitle = subject?.lessons[0]?.title || 'Your Lesson';
+  const lessonDescription = subject?.lessons[0]?.description || 'This lesson is personalized to your selected subject and learning goals.';
+  const hobbyExample = subject?.hobbyExamples[0];
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([
     {
       type: 'ai',
-      message: "Hi! I'm your AI tutor. I've noticed you're learning about functions. I can explain concepts using gaming examples since that's one of your hobbies. What would you like to know?",
+      message: `Hi! I'm your AI tutor. We're learning ${subject?.name || 'your chosen subject'} today, and I can explain concepts using your hobbies. What would you like to know?`,
       timestamp: '2:00 PM'
     }
   ]);
@@ -81,7 +88,7 @@ export default function Lesson() {
                 </Button>
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-3xl font-bold">JavaScript Functions</h1>
+                    <h1 className="text-3xl font-bold">{lessonTitle}</h1>
                     <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Intermediate</Badge>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -91,11 +98,11 @@ export default function Lesson() {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
-                      ~30 min
+                      {subject?.lessons[0]?.duration || '~30 min'}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Target className="w-4 h-4" />
-                      92% Match
+                      Personalized Match
                     </span>
                   </div>
                 </div>
@@ -165,10 +172,9 @@ export default function Lesson() {
                 <div className="prose max-w-none">
                   {/* Introduction */}
                   <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-gray-900">What are Functions?</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">About this lesson</h2>
                     <p className="text-gray-700 leading-relaxed text-lg">
-                      Functions are reusable blocks of code that perform specific tasks. Think of them like 
-                      power-ups in a game - you can define them once and use them whenever you need that specific ability!
+                      {lessonDescription}
                     </p>
                   </div>
 
@@ -179,11 +185,9 @@ export default function Lesson() {
                         <Gamepad2 className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-semibold text-purple-900 mb-2">🎮 Your Gaming Example</p>
+                        <p className="font-semibold text-purple-900 mb-2">{hobbyExample ? `🎮 Your ${hobbyExample.hobby} Example` : '🎮 Your Example'}</p>
                         <p className="text-gray-700 leading-relaxed">
-                          In your favorite RPG, you might have a "heal" function that restores health. 
-                          Instead of writing out all the healing logic every time a character needs healing, 
-                          you just call <code className="px-2 py-1 bg-purple-100 rounded text-sm">heal()</code> whenever you need it!
+                          {hobbyExample?.example || 'This section uses your saved hobbies and subject to explain the concept in a familiar way.'}
                         </p>
                       </div>
                     </div>

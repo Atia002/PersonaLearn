@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Brain, Clock, ArrowRight, CheckCircle } from 'lucide-react';
+import { useLearner } from '../contexts/LearnerContext';
+import { updateLearnerProfile } from '../utils/learnerApi';
 
 const questions = [
   {
@@ -46,10 +48,12 @@ const questions = [
 
 export default function Diagnostic() {
   const navigate = useNavigate();
+  const { learner, updateLearner } = useLearner();
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [completed, setCompleted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleAnswer = (answerIndex: number) => {
     const newAnswers = [...answers, answerIndex];
@@ -60,6 +64,28 @@ export default function Diagnostic() {
     } else {
       setCompleted(true);
     }
+  };
+
+  const handleGeneratePlan = async () => {
+    const correctAnswers = answers.filter((answer, index) => answer === questions[index].correct).length;
+    const score = Math.round((correctAnswers / questions.length) * 100);
+
+    updateLearner({ diagnosticScore: score });
+
+    if (learner?.id) {
+      setSaving(true);
+      try {
+        await updateLearnerProfile(learner.id, {
+          profile: {
+            diagnosticScore: score,
+          },
+        });
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    navigate('/personalized-plan');
   };
 
   if (!started) {
@@ -161,8 +187,8 @@ export default function Diagnostic() {
             </div>
           </div>
 
-          <Button size="lg" onClick={() => navigate('/personalized-plan')} className="w-full">
-            Generate My Learning Plan
+          <Button size="lg" onClick={handleGeneratePlan} className="w-full" disabled={saving}>
+            {saving ? 'Saving Score...' : 'Generate My Learning Plan'}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </Card>

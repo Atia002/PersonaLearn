@@ -1,8 +1,15 @@
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Target, Clock, Zap, Heart, Brain, Edit } from 'lucide-react';
+import { useLearner } from '../../contexts/LearnerContext';
+import { getLearnerInitials } from '../../utils/learnerHelpers';
+import { subjectData } from '../../data/subjectData';
 
 export default function Profile() {
+  const { learner } = useLearner();
+  const subjectName = learner?.subject && subjectData[learner.subject] ? subjectData[learner.subject].name : 'Not selected';
+  const hobbyLabels = learner?.hobbies?.length ? learner.hobbies : ['Gaming', 'Music', 'Sports'];
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -14,11 +21,11 @@ export default function Profile() {
         <Card className="p-8">
           <div className="flex items-center gap-6 mb-6">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1e40af] to-[#14b8a6] flex items-center justify-center text-white text-3xl font-bold">
-              AT
+              {getLearnerInitials(learner)}
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-1">Atia Thompson</h2>
-              <p className="text-gray-600">atia@example.com</p>
+              <h2 className="text-2xl font-bold mb-1">{learner?.name || 'Your Name'}</h2>
+              <p className="text-gray-600">{learner?.email || 'you@example.com'}</p>
               <p className="text-sm text-gray-500 mt-2">Student • Joined March 2026</p>
             </div>
             <Button variant="outline">
@@ -36,8 +43,8 @@ export default function Profile() {
               </div>
               <h3 className="font-semibold">Learning Goal</h3>
             </div>
-            <p className="text-gray-700">Exam Preparation</p>
-            <p className="text-sm text-gray-500 mt-1">JavaScript exam in 4 weeks</p>
+              <p className="text-gray-700">{learner?.goal || 'Exam Preparation'}</p>
+              <p className="text-sm text-gray-500 mt-1">{learner?.reason || 'Your personalized learning goal'}</p>
           </Card>
 
           <Card className="p-6">
@@ -47,8 +54,8 @@ export default function Profile() {
               </div>
               <h3 className="font-semibold">Time Commitment</h3>
             </div>
-            <p className="text-gray-700">5 hours per week</p>
-            <p className="text-sm text-gray-500 mt-1">30-minute sessions • Afternoon preferred</p>
+            <p className="text-gray-700">{learner?.weeklyHours || 5} hours per week</p>
+            <p className="text-sm text-gray-500 mt-1">{learner?.sessionLength || 30}-minute sessions • {learner?.studyTime || 'Afternoon'} preferred</p>
           </Card>
 
           <Card className="p-6">
@@ -58,8 +65,8 @@ export default function Profile() {
               </div>
               <h3 className="font-semibold">Learning Pace</h3>
             </div>
-            <p className="text-gray-700">Balanced</p>
-            <p className="text-sm text-gray-500 mt-1">Steady progress with good depth</p>
+            <p className="text-gray-700">{learner?.pace || 'Balanced'}</p>
+            <p className="text-sm text-gray-500 mt-1">{learner?.pathPreference || 'Steady progress with good depth'}</p>
           </Card>
 
           <Card className="p-6">
@@ -69,8 +76,8 @@ export default function Profile() {
               </div>
               <h3 className="font-semibold">Support Mode</h3>
             </div>
-            <p className="text-gray-700">Balanced Support</p>
-            <p className="text-sm text-gray-500 mt-1">Normal explanation level • 50% confidence</p>
+            <p className="text-gray-700">{learner?.supportMode || 'Balanced Support'}</p>
+            <p className="text-sm text-gray-500 mt-1">{learner?.explanationLevel || 'Normal'} explanation level • {learner?.confidence ?? 50}% confidence</p>
           </Card>
         </div>
 
@@ -82,7 +89,7 @@ export default function Profile() {
             <h3 className="font-semibold">Hobbies & Interests</h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            {['Gaming', 'Music', 'Sports', 'Coding', 'Movies'].map((hobby) => (
+            {hobbyLabels.map((hobby) => (
               <span key={hobby} className="px-3 py-1 bg-blue-100 text-[#1e40af] rounded-full text-sm">
                 {hobby}
               </span>

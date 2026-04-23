@@ -3,8 +3,11 @@ import { Button } from '../../components/ui/button';
 import { Switch } from '../../components/ui/switch';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { useLearner } from '../../contexts/LearnerContext';
 
 export default function Settings() {
+  const { learner } = useLearner();
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -19,7 +22,7 @@ export default function Settings() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input type="email" defaultValue="atia@example.com" />
+                <Input type="email" defaultValue={learner?.email || 'atia@example.com'} />
               </div>
               <div className="space-y-2">
                 <Label>Current Password</Label>
