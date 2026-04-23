@@ -8,4 +8,14 @@
   Run `npm i` to install the dependencies.
 
   Run `npm run dev` to start the development server.
+
+  ## Backend API (PHP)
+
+  A PHP backend is available in the `backend` folder.
+
+  Run backend locally:
+
+  `php -S localhost:8000 -t backend/public`
+
+  See `backend/README.md` for endpoint docs and request payloads.
   
