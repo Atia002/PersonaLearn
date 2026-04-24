@@ -9,9 +9,9 @@ interface SubjectStepProps {
 const subjects = [
   {
     id: 'programming',
-    name: 'Introductory Programming',
+    name: 'Programming',
     icon: <Code className="w-8 h-8 text-[#3b82f6]" />,
-    description: 'Learn coding fundamentals and problem-solving',
+    description: 'Learn coding fundamentals, variables, loops, and functions',
     difficulty: 'Beginner Friendly',
     duration: '12-16 weeks',
     color: 'from-blue-500 to-blue-600'
@@ -20,7 +20,7 @@ const subjects = [
     id: 'writing',
     name: 'Academic Writing',
     icon: <FileText className="w-8 h-8 text-[#14b8a6]" />,
-    description: 'Master essay structure, research, and citation',
+    description: 'Master thesis statements, paragraph structure, grammar, and referencing',
     difficulty: 'All Levels',
     duration: '8-10 weeks',
     color: 'from-teal-500 to-teal-600'
@@ -33,15 +33,6 @@ const subjects = [
     difficulty: 'Beginner Friendly',
     duration: '10-14 weeks',
     color: 'from-purple-500 to-purple-600'
-  },
-  {
-    id: 'custom',
-    name: 'Other Subject',
-    icon: <Plus className="w-8 h-8 text-gray-400" />,
-    description: 'Request a custom learning track',
-    difficulty: 'Coming Soon',
-    duration: 'TBD',
-    color: 'from-gray-400 to-gray-500'
   }
 ];
 
@@ -57,12 +48,12 @@ export default function SubjectStep({ data, updateData }: SubjectStepProps) {
         {subjects.map((subject) => (
           <Card
             key={subject.id}
-            className={`p-6 cursor-pointer transition-all hover:shadow-lg ${
+              className={`p-6 cursor-pointer transition-all hover:shadow-lg ${
               data.subject === subject.id
                 ? 'border-2 border-[#1e40af] shadow-lg'
                 : 'border-2 border-transparent'
-            } ${subject.id === 'custom' ? 'opacity-60' : ''}`}
-            onClick={() => subject.id !== 'custom' && updateData({ subject: subject.id })}
+            }`}
+            onClick={() => updateData({ subject: subject.id })}
           >
             <div className="flex items-start gap-4">
               <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center flex-shrink-0`}>

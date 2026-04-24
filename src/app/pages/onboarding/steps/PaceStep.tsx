@@ -9,7 +9,7 @@ interface PaceStepProps {
 const paces = [
   { id: 'slow', label: 'Slow & Guided', icon: <Turtle className="w-6 h-6" />, desc: 'Take your time, deep understanding first', color: 'from-blue-400 to-blue-500' },
   { id: 'balanced', label: 'Balanced', icon: <Gauge className="w-6 h-6" />, desc: 'Steady progress with good depth', color: 'from-teal-400 to-teal-500' },
-  { id: 'intensive', label: 'Intensive', icon: <Zap className="w-6 h-6" />, desc: 'Fast-paced, cover more ground quickly', color: 'from-purple-400 to-purple-500' }
+  { id: 'fast', label: 'Fast', icon: <Zap className="w-6 h-6" />, desc: 'Fast-paced, cover more ground quickly', color: 'from-purple-400 to-purple-500' }
 ];
 
 export default function PaceStep({ data, updateData }: PaceStepProps) {

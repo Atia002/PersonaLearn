@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   ];
 
   const subjects = [
-    { name: 'Introductory Programming', modules: 8, concepts: 120, students: 450 },
+    { name: 'Programming', modules: 8, concepts: 120, students: 450 },
     { name: 'Academic Writing', modules: 6, concepts: 85, students: 320 },
     { name: 'Science', modules: 7, concepts: 98, students: 280 },
   ];

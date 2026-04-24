@@ -30,8 +30,19 @@ export default function Login() {
         id: response.learner.id,
         name: response.learner.name,
         email: response.learner.email,
+        role: response.learner.role || 'student',
         ...(response.learner.profile || {}),
       });
+
+      if (response.learner.role === 'instructor') {
+        navigate('/instructor');
+        return;
+      }
+
+      if (response.learner.role === 'admin') {
+        navigate('/admin');
+        return;
+      }
 
       const hasOnboardingData = Boolean(response.learner.profile?.goal && response.learner.profile?.subject);
       navigate(hasOnboardingData ? '/dashboard' : '/onboarding');

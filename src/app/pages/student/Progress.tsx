@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -36,10 +37,23 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useLearner } from '../../contexts/LearnerContext';
+import { getSubjectData } from '../../data/subjectData';
 import PersonaProfile from '../../components/PersonaProfile';
 
 export default function Progress() {
   const navigate = useNavigate();
+  const { learner } = useLearner();
+  const subject = getSubjectData(learner?.subject || 'programming');
+  const topicData = useMemo(() => {
+    const concepts = subject?.concepts || [];
+    return concepts.map((concept) => ({
+      topic: concept.name,
+      mastery: concept.mastery,
+      confidence: concept.confidence,
+      status: concept.status,
+    }));
+  }, [subject]);
 
   const progressData = [
     { week: 'Week 1', mastery: 30, studyHours: 4, goalHours: 5 },
@@ -48,21 +62,8 @@ export default function Progress() {
     { week: 'Week 4', mastery: 75, studyHours: 4.5, goalHours: 5 },
   ];
 
-  const topicData = [
-    { topic: 'Variables', mastery: 95, confidence: 'high', status: 'mastered' },
-    { topic: 'Functions', mastery: 70, confidence: 'medium', status: 'learning' },
-    { topic: 'Loops', mastery: 45, confidence: 'low', status: 'needs-review' },
-    { topic: 'Arrays', mastery: 30, confidence: 'low', status: 'just-started' },
-    { topic: 'Objects', mastery: 60, confidence: 'medium', status: 'learning' },
-  ];
-
   const radarData = [
-    { subject: 'Variables', score: 95, fullMark: 100 },
-    { subject: 'Functions', score: 70, fullMark: 100 },
-    { subject: 'Loops', score: 45, fullMark: 100 },
-    { subject: 'Objects', score: 60, fullMark: 100 },
-    { subject: 'DOM', score: 40, fullMark: 100 },
-    { subject: 'Arrays', score: 30, fullMark: 100 },
+    ...topicData.map((topic) => ({ subject: topic.topic, score: topic.mastery, fullMark: 100 })),
   ];
 
   const dailyActivityData = [

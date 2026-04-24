@@ -19,7 +19,7 @@ export function getLearnerFirstName(learner: LearnerProfile | null): string {
 
 export function getSubjectDisplayName(subjectId: string): string {
   const map: { [key: string]: string } = {
-    'programming': 'Introductory Programming',
+    'programming': 'Programming',
     'writing': 'Academic Writing',
     'science': 'Science',
   };

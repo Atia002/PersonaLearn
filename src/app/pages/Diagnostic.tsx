@@ -6,49 +6,13 @@ import { Progress } from '../components/ui/progress';
 import { Brain, Clock, ArrowRight, CheckCircle } from 'lucide-react';
 import { useLearner } from '../contexts/LearnerContext';
 import { updateLearnerProfile } from '../utils/learnerApi';
-
-const questions = [
-  {
-    id: 1,
-    topic: 'Variables',
-    question: 'What is a variable in programming?',
-    options: [
-      'A container for storing data values',
-      'A type of loop',
-      'A function that changes',
-      'A constant value'
-    ],
-    correct: 0
-  },
-  {
-    id: 2,
-    topic: 'Functions',
-    question: 'What is the purpose of a function?',
-    options: [
-      'To store data',
-      'To repeat code multiple times',
-      'To organize reusable code blocks',
-      'To create variables'
-    ],
-    correct: 2
-  },
-  {
-    id: 3,
-    topic: 'Loops',
-    question: 'Which loop runs at least once?',
-    options: [
-      'for loop',
-      'while loop',
-      'do-while loop',
-      'if loop'
-    ],
-    correct: 2
-  }
-];
+import { getSubjectData } from '../data/subjectData';
 
 export default function Diagnostic() {
   const navigate = useNavigate();
   const { learner, updateLearner } = useLearner();
+  const subjectData = getSubjectData(learner?.subject || 'programming');
+  const questions = subjectData?.quizQuestions || [];
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -67,10 +31,17 @@ export default function Diagnostic() {
   };
 
   const handleGeneratePlan = async () => {
-    const correctAnswers = answers.filter((answer, index) => answer === questions[index].correct).length;
+    const correctAnswers = answers.filter((answer, index) => answer === questions[index].correctAnswer).length;
     const score = Math.round((correctAnswers / questions.length) * 100);
+    const wrongQuestion = questions.find((question, index) => answers[index] !== question.correctAnswer);
+    const weakConcept = wrongQuestion?.concept || questions[0]?.concept || '';
+    const confidence = score >= 75 ? 'high' : score >= 50 ? 'medium' : 'low';
 
-    updateLearner({ diagnosticScore: score });
+    updateLearner({
+      diagnosticScore: score,
+      diagnosticWeakConcept: weakConcept,
+      diagnosticConfidence: confidence,
+    });
 
     if (learner?.id) {
       setSaving(true);
@@ -78,6 +49,8 @@ export default function Diagnostic() {
         await updateLearnerProfile(learner.id, {
           profile: {
             diagnosticScore: score,
+            diagnosticWeakConcept: weakConcept,
+            diagnosticConfidence: confidence,
           },
         });
       } finally {
@@ -134,8 +107,13 @@ export default function Diagnostic() {
   }
 
   if (completed) {
-    const correctAnswers = answers.filter((answer, index) => answer === questions[index].correct).length;
+    const correctAnswers = answers.filter((answer, index) => answer === questions[index].correctAnswer).length;
     const score = Math.round((correctAnswers / questions.length) * 100);
+    const weakConcepts = questions
+      .filter((question, index) => answers[index] !== question.correctAnswer)
+      .map((question) => question.concept);
+    const weakConcept = weakConcepts[0] || questions[0]?.concept || 'Review needed';
+    const confidence = score >= 75 ? 'high' : score >= 50 ? 'medium' : 'low';
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50/30 to-white flex items-center justify-center p-6">
@@ -167,8 +145,8 @@ export default function Diagnostic() {
                 <div className="text-sm text-gray-600">To Improve</div>
               </div>
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-[#1e40af]">Beginner</div>
-                <div className="text-sm text-gray-600">Current Level</div>
+                <div className="text-2xl font-bold text-[#1e40af]">{confidence}</div>
+                <div className="text-sm text-gray-600">Confidence</div>
               </div>
             </div>
           </div>
@@ -176,14 +154,10 @@ export default function Diagnostic() {
           <div className="space-y-3">
             <h3 className="font-semibold">Identified Focus Areas:</h3>
             <div className="space-y-2">
-              {questions.map((q, index) => (
-                answers[index] !== q.correct && (
-                  <div key={q.id} className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
-                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                    <span className="text-sm">{q.topic}</span>
-                  </div>
-                )
-              ))}
+              <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-sm">{weakConcept}</span>
+              </div>
             </div>
           </div>
 
@@ -215,7 +189,7 @@ export default function Diagnostic() {
         <Card className="p-8 space-y-6">
           <div>
             <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-[#1e40af] text-sm font-medium mb-4">
-              {question.topic}
+              {question.concept}
             </span>
             <h2 className="text-2xl font-bold text-gray-900">{question.question}</h2>
           </div>

@@ -39,13 +39,24 @@ import PersonaProfile from '../../components/PersonaProfile';
 import HobbyExampleCard from '../../components/HobbyExampleCard';
 import { useLearner } from '../../contexts/LearnerContext';
 import { getLearnerFirstName, getLearnerInitials } from '../../utils/learnerHelpers';
-import { getSubjectData, getSubjectConcepts, getSubjectHobbyExamples } from '../../data/subjectData';
+import { getSubjectData } from '../../data/subjectData';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { learner, logout } = useLearner();
   const subject = getSubjectData(learner?.subject || 'programming');
-  const recommendedLesson = subject?.lessons[0];
+  const generatedPlan = (learner?.generatedPlan || {}) as {
+    weakConcept?: string;
+    summary?: string;
+    planItems?: Array<{ day: string; concept: string; taskTitle: string; estimatedMinutes: number; supportLevel: string; reason: string; status: string; recommendedResourceType: string }>;
+    weeklyPlan?: Array<{ day: string; concept: string; taskTitle: string; estimatedMinutes: number; supportLevel: string; reason: string; status: string; recommendedResourceType: string }>;
+    nextLesson?: { concept?: string; taskTitle?: string; estimatedMinutes?: number; reason?: string };
+  };
+  const weakConcept = learner?.diagnosticWeakConcept || generatedPlan.weakConcept || subject?.concepts.find((concept) => concept.status !== 'mastered')?.name || 'Review needed';
+  const planItems = (generatedPlan.planItems?.length ? generatedPlan.planItems : (generatedPlan.weeklyPlan || [])).slice(0, 3);
+  const nextLesson = generatedPlan.nextLesson || planItems[0] || subject?.lessons[0];
+  const uploadedNotesCount = learner?.materialsCount || 0;
+  const recentTutorActivity = learner?.recentTutorActivity;
 
   const navItems = [
     { icon: <Home className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard', active: true },
@@ -62,36 +73,36 @@ export default function Dashboard() {
 
   const stats = [
     { 
-      label: 'Current Level', 
-      value: 'Intermediate', 
+      label: 'Selected Subject', 
+      value: subject?.name || 'Not set', 
       icon: <TrendingUp className="w-6 h-6" />, 
       color: 'from-blue-500 to-blue-600',
-      trend: '+2 levels',
-      trendUp: true
+      trend: learner?.goal || 'Learning goal',
+      trendUp: false
     },
     { 
-      label: 'Mastery Score', 
-      value: '67%', 
+      label: 'Weak Concept', 
+      value: weakConcept, 
       icon: <Target className="w-6 h-6" />, 
       color: 'from-purple-500 to-purple-600',
-      trend: '+12%',
-      trendUp: true
+      trend: learner?.diagnosticConfidence || 'from diagnostic',
+      trendUp: false
     },
     { 
-      label: 'Study Streak', 
-      value: '7 days', 
+      label: 'Weekly Study Time', 
+      value: `${learner?.weeklyHours || 5} hrs`, 
       icon: <Flame className="w-6 h-6" />, 
       color: 'from-orange-500 to-red-600',
-      trend: 'Personal best!',
-      trendUp: true
+      trend: `${learner?.sessionLength || 30}-min sessions`,
+      trendUp: false
     },
     { 
-      label: 'Weekly Goal', 
-      value: '4.2/5h', 
+      label: 'Confidence', 
+      value: `${learner?.confidence || 50}%`, 
       icon: <Trophy className="w-6 h-6" />, 
       color: 'from-green-500 to-teal-600',
-      trend: '84% done',
-      trendUp: true
+      trend: learner?.supportMode || 'balanced support',
+      trendUp: false
     },
   ];
 
@@ -106,29 +117,19 @@ export default function Dashboard() {
       priority: concept.priority || 'medium',
     }));
 
-  const upcomingSessions = [
-    { 
-      day: 'Today', 
-      time: '2:00 PM', 
-      topic: 'JavaScript Functions', 
-      duration: '30 min',
-      isNext: true
-    },
-    { 
-      day: 'Wed', 
-      time: '2:00 PM', 
-      topic: 'Object-Oriented Programming', 
-      duration: '30 min',
-      isNext: false
-    },
-    { 
-      day: 'Fri', 
-      time: '2:00 PM', 
-      topic: 'DOM Manipulation', 
-      duration: '30 min',
-      isNext: false
-    },
-  ];
+  const upcomingSessions = (planItems.length ? planItems : [
+    { day: 'Today', concept: nextLesson?.concept || subject?.lessons[0]?.title || 'Review', taskTitle: nextLesson?.taskTitle || 'Start lesson', estimatedMinutes: learner?.sessionLength || 30, supportLevel: learner?.supportMode || 'balanced', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'lesson' },
+    { day: 'Wed', concept: weakConcept, taskTitle: 'Practice the weak concept', estimatedMinutes: learner?.sessionLength || 30, supportLevel: learner?.supportMode || 'balanced', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'practice' },
+    { day: 'Fri', concept: learner?.goal || 'Goal review', taskTitle: 'Quick check-in', estimatedMinutes: learner?.sessionLength || 30, supportLevel: learner?.supportMode || 'balanced', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'quiz' },
+  ]).map((item, index) => ({
+    day: item.day,
+    time: '2:00 PM',
+    topic: item.concept,
+    duration: `${item.estimatedMinutes} min`,
+    reason: item.reason,
+    supportLevel: item.supportLevel,
+    isNext: index === 0,
+  }));
 
   const achievements = [
     { icon: <Star className="w-5 h-5" />, label: '7-day Streak', color: 'bg-yellow-500' },
@@ -252,13 +253,12 @@ export default function Dashboard() {
                     <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse" />
                   </div>
                   <p className="text-blue-50 text-lg max-w-2xl">
-                    You're on track with your {learner?.goal || 'learning goals'}! Based on your pace and recent progress, 
-                    you're ready to continue with your personalized learning path.
+                    You're on track with {learner?.goal || 'your learning goals'}. The next step is shaped by {weakConcept}, your support mode, and your available study time.
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Flame className="w-12 h-12 text-orange-300" />
-                  <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">7 Day Streak 🔥</span>
+                  <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">{uploadedNotesCount} Notes Saved</span>
                 </div>
               </div>
 
@@ -342,24 +342,24 @@ export default function Dashboard() {
                     
                     <div className="flex-1 space-y-3">
                       <div>
-                        <h4 className="font-bold text-xl mb-2">{recommendedLesson?.title || 'Your Next Lesson'}</h4>
+                        <h4 className="font-bold text-xl mb-2">{nextLesson?.taskTitle || nextLesson?.title || 'Your Next Lesson'}</h4>
                         <p className="text-gray-600">
-                          {recommendedLesson?.description || 'Your next lesson is generated from your selected subject and saved learner profile.'}
+                          {generatedPlan.summary || 'Your next lesson is generated from your selected subject, weak concept, and saved learner profile.'}
                         </p>
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-gray-500">
                         <span className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-blue-500" />
-                          {recommendedLesson?.duration || '30 min'}
+                          {nextLesson?.estimatedMinutes ? `${nextLesson.estimatedMinutes} min` : `${learner?.sessionLength || 30} min`}
                         </span>
                         <span className="flex items-center gap-2">
                           <Target className="w-4 h-4 text-purple-500" />
-                          {recommendedLesson?.difficulty || 'Intermediate'}
+                          {learner?.supportMode || 'balanced support'}
                         </span>
                         <span className="flex items-center gap-2">
                           <Lightbulb className="w-4 h-4 text-yellow-500" />
-                          92% Match
+                          {weakConcept}
                         </span>
                       </div>
                     </div>
@@ -376,11 +376,11 @@ export default function Dashboard() {
                         <div className="space-y-2 text-sm text-gray-700">
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Your diagnostic and saved subject profile are shaping the next lesson suggestions</span>
+                            <span>{weakConcept} is moved to the front because your diagnostic showed it needs work</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Your current pace is used to balance challenge and review</span>
+                            <span>Your pace and support mode balance challenge and review</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -388,8 +388,14 @@ export default function Dashboard() {
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>The weekly schedule now comes from your onboarding preferences</span>
+                            <span>The weekly schedule comes from your onboarding preferences and available hours</span>
                           </div>
+                          {recentTutorActivity?.answerPreview && (
+                            <div className="flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span>Recent tutor activity: {recentTutorActivity.answerPreview}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -520,6 +526,9 @@ export default function Dashboard() {
                         {session.time}
                         {session.isNext && <Badge className="ml-auto bg-white/20 text-white text-xs">Up Next</Badge>}
                       </div>
+                      <div className={`text-xs mt-2 ${session.isNext ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {session.reason}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -608,15 +617,15 @@ export default function Dashboard() {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">Best focus time: <strong>Afternoons</strong></span>
+                    <span className="text-gray-700">Best focus time: <strong>{learner?.studyTime || 'Afternoons'}</strong></span>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">Strongest skill: <strong>Problem Solving</strong></span>
+                    <span className="text-gray-700">Weak concept: <strong>{weakConcept}</strong></span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">You learn best with <strong>hands-on examples</strong></span>
+                    <span className="text-gray-700">You learn best with <strong>{learner?.supportMode || 'balanced support'}</strong></span>
                   </div>
                 </div>
               </Card>

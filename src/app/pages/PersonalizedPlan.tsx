@@ -12,9 +12,16 @@ import { generateLearningPlan } from '../utils/learnerApi';
 type GeneratedPlan = {
   goal?: string;
   subject?: string;
+  weakConcept?: string;
+  summary?: string;
+  weeklyHours?: number;
+  sessionLength?: number;
   sessionsPerWeek?: number;
-  weeklyPlan?: Array<{ day: string; durationMinutes: number; focus: string; task: string }>;
-  personalization?: { hobbies?: string[]; studyTime?: string; pace?: string };
+  weeklyPlan?: Array<{ day: string; concept: string; taskTitle: string; estimatedMinutes: number; supportLevel: string; reason: string; status: string; recommendedResourceType: string }>;
+  planItems?: Array<{ day: string; concept: string; taskTitle: string; estimatedMinutes: number; supportLevel: string; reason: string; status: string; recommendedResourceType: string }>;
+  personalization?: { hobbies?: string[]; studyTime?: string; pace?: string; supportMode?: string; confidence?: number; explanationLevel?: string };
+  rationale?: { text?: string; weakConceptFirst?: boolean };
+  nextLesson?: { concept?: string; taskTitle?: string; estimatedMinutes?: number; reason?: string };
   freeResources?: { wikipedia?: { title?: string; summary?: string; url?: string }; openLibraryBooks?: Array<{ title?: string; author?: string; url?: string }> };
 };
 
@@ -25,6 +32,7 @@ export default function PersonalizedPlan() {
   const [progress, setProgress] = useState(0);
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [error, setError] = useState('');
+  const planItems = plan?.planItems?.length ? plan.planItems : (plan?.weeklyPlan || []);
 
   useEffect(() => {
     const loadPlan = async () => {
@@ -144,8 +152,7 @@ export default function PersonalizedPlan() {
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Personalized Learning Plan is Ready!</h1>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-              Based on your {plan?.subject || learner?.subject || 'learning preferences'}, pace, interests, and diagnostic results, we've created a unique AI-powered 
-              learning path designed specifically for <strong>you</strong>.
+                Based on your profile and diagnostic, this prototype adaptive plan starts with <strong>{plan?.weakConcept || learner?.diagnosticWeakConcept || 'your weakest concept'}</strong> and adjusts the schedule to your pace, support mode, and available time.
             </p>
           </div>
         </Card>
@@ -170,7 +177,7 @@ export default function PersonalizedPlan() {
                 <h3 className="font-bold text-xl mb-2">Your Learning Goal</h3>
                 <p className="text-lg font-semibold text-blue-600 mb-3">{plan?.goal || learner?.goal || 'Exam Preparation'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  The backend analyzed your profile and created a plan around your current goals, subject, and diagnostic feedback.
+                  The backend created this prototype adaptive plan from your profile and diagnostic weak concept.
                 </p>
               </div>
             </div>
@@ -183,9 +190,9 @@ export default function PersonalizedPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-xl mb-2">Time Commitment</h3>
-                <p className="text-lg font-semibold text-teal-600 mb-3">{learner?.weeklyHours || 5} hours per week</p>
+                <p className="text-lg font-semibold text-teal-600 mb-3">{plan?.weeklyHours || learner?.weeklyHours || 5} hours per week</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Your schedule matches your stored availability and is split into focused sessions.
+                  Shorter weeks get shorter sessions. The schedule is split into focused study blocks.
                 </p>
               </div>
             </div>
@@ -200,7 +207,7 @@ export default function PersonalizedPlan() {
                 <h3 className="font-bold text-xl mb-2">Learning Pace</h3>
                 <p className="text-lg font-semibold text-purple-600 mb-3">{plan?.personalization?.pace || learner?.pace || 'Balanced Approach'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  The backend is using your preferred pace to shape the difficulty and lesson flow.
+                  Pace and support mode shape how demanding each task feels.
                 </p>
               </div>
             </div>
@@ -215,7 +222,7 @@ export default function PersonalizedPlan() {
                 <h3 className="font-bold text-xl mb-2">Personalization</h3>
                 <p className="text-lg font-semibold text-pink-600 mb-3">{(plan?.personalization?.hobbies || learner?.hobbies || []).join(' & ') || 'Personalized Examples'}</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Your interests are now part of the saved learning profile and will be used in examples.
+                  {plan?.personalization?.supportMode || learner?.supportMode || 'balanced'} support and your hobbies are stored for explanations.
                 </p>
               </div>
             </div>
@@ -229,34 +236,41 @@ export default function PersonalizedPlan() {
             <h3 className="text-2xl font-bold text-gray-900">Your Optimized Weekly Schedule</h3>
             <Badge className="bg-blue-100 text-blue-700">
               <Sparkles className="w-3.5 h-3.5 mr-1" />
-              AI Optimized
+              Prototype adaptive plan
             </Badge>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
-            {(plan?.weeklyPlan?.length ? plan.weeklyPlan : [
-              { day: 'Monday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Review your next lesson' },
-              { day: 'Wednesday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Practice with examples' },
-              { day: 'Friday', durationMinutes: learner?.sessionLength || 30, focus: 'Learning session', task: 'Take a quick self-check' },
+            {(planItems.length ? planItems : [
+              { day: 'Monday', concept: plan?.weakConcept || learner?.diagnosticWeakConcept || 'Review topic', taskTitle: 'Review lesson', estimatedMinutes: learner?.sessionLength || 30, supportLevel: 'guided', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'review' },
+              { day: 'Wednesday', concept: plan?.subject || learner?.subject || 'Track', taskTitle: 'Practice lesson', estimatedMinutes: learner?.sessionLength || 30, supportLevel: 'balanced', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'practice' },
+              { day: 'Friday', concept: plan?.goal || learner?.goal || 'Goal', taskTitle: 'Quick self-check', estimatedMinutes: learner?.sessionLength || 30, supportLevel: 'balanced', reason: 'Fallback session', status: 'upcoming', recommendedResourceType: 'quiz' },
             ]).map((session, index) => (
               <div key={`${session.day}-${index}`} className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-all">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="font-bold text-lg text-gray-900 mb-1">{session.day} Afternoon</div>
-                    <div className="text-sm text-gray-600">2:00 PM - 2:30 PM</div>
+                    <div className="font-bold text-lg text-gray-900 mb-1">{session.day}</div>
+                    <div className="text-sm text-gray-600">{session.concept}</div>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold shadow-lg">
-                    {session.durationMinutes}
+                    {session.estimatedMinutes}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-gray-700 font-medium">{session.task}</span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-gray-700 font-medium">{session.taskTitle}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">{session.reason}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>Support: {session.supportLevel}</span>
+                    <span>{session.recommendedResourceType}</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
           <p className="text-sm text-gray-600 mt-6 text-center">
-            These sessions are generated from your saved learner profile and plan settings.
+            These sessions are generated from your saved learner profile and diagnostic weak concept.
           </p>
         </Card>
 
@@ -270,34 +284,16 @@ export default function PersonalizedPlan() {
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "Your diagnostic showed strength in basics (85% score) but need practice with functions and loops - we'll focus there"
-              },
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "Balanced pace matches your preference for steady progress with deep understanding over speed"
-              },
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "Examples use gaming (RPGs, health bars, power-ups) and music (playlists, tracks) based on your interests"
-              },
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "Schedule fits your afternoon availability with 30-min sessions - proven optimal for retention"
-              },
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "Front-loaded challenging topics to give you more practice time before your exam"
-              },
-              {
-                icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-                text: "AI will continuously adapt based on your progress and adjust difficulty in real-time"
-              }
-            ].map((item, index) => (
+              plan?.rationale?.text || 'This plan starts with the weakest concept from your diagnostic and adjusts the task difficulty to your profile.',
+              `Support mode: ${plan?.personalization?.supportMode || learner?.supportMode || 'balanced'}`,
+              `Confidence level: ${plan?.personalization?.confidence || learner?.confidence || 50}%`,
+              `Hobbies used for examples: ${(plan?.personalization?.hobbies || learner?.hobbies || []).join(', ') || 'not yet provided'}`,
+              `Estimated time per session: ${plan?.sessionLength || learner?.sessionLength || 30} minutes`,
+              `First lesson opens from the plan using ${plan?.nextLesson?.taskTitle || 'the first recommended activity'}`,
+            ].map((text, index) => (
               <div key={index} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-blue-200">
-                {item.icon}
-                <span className="text-sm text-gray-700 leading-relaxed">{item.text}</span>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-sm text-gray-700 leading-relaxed">{text}</span>
               </div>
             ))}
           </div>
@@ -376,15 +372,23 @@ export default function PersonalizedPlan() {
         </Card>
 
         {/* CTA Button */}
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button 
             size="lg" 
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/lesson/1')}
             className="text-lg px-12 py-7 rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 shadow-2xl hover:scale-105 transition-all"
           >
             <Sparkles className="w-6 h-6 mr-3" />
-            Go to My Dashboard
+            Open First Lesson
             <ArrowRight className="w-6 h-6 ml-3" />
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+            className="text-lg px-12 py-7 rounded-2xl"
+          >
+            Go to My Dashboard
           </Button>
         </div>
       </div>

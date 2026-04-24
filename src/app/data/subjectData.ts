@@ -46,14 +46,12 @@ export interface SubjectData {
 export const subjectData: Record<string, SubjectData> = {
   programming: {
     id: 'programming',
-    name: 'Introductory Programming',
+    name: 'Programming',
     concepts: [
-      { id: 'variables', name: 'Variables & Data Types', mastery: 85, confidence: 'high', status: 'mastered', lastStudied: '1 day ago' },
-      { id: 'functions', name: 'Functions', mastery: 70, confidence: 'medium', status: 'learning', lastStudied: '2 hours ago' },
-      { id: 'loops', name: 'Loops', mastery: 45, confidence: 'low', status: 'needs-review', lastStudied: '3 days ago', priority: 'high' },
-      { id: 'arrays', name: 'Arrays', mastery: 30, confidence: 'low', status: 'just-started', lastStudied: '1 week ago', priority: 'medium' },
-      { id: 'objects', name: 'Objects', mastery: 60, confidence: 'medium', status: 'learning', lastStudied: '2 days ago' },
-      { id: 'conditionals', name: 'Conditionals', mastery: 75, confidence: 'medium', status: 'learning', lastStudied: '1 day ago' },
+      { id: 'variables', name: 'Variables', mastery: 82, confidence: 'high', status: 'mastered', lastStudied: '1 day ago' },
+      { id: 'conditionals', name: 'Conditionals', mastery: 68, confidence: 'medium', status: 'learning', lastStudied: '2 days ago' },
+      { id: 'loops', name: 'Loops', mastery: 44, confidence: 'low', status: 'needs-review', lastStudied: '3 days ago', priority: 'high' },
+      { id: 'functions', name: 'Functions', mastery: 61, confidence: 'medium', status: 'learning', lastStudied: '2 hours ago' },
     ],
     lessons: [
       {
@@ -69,25 +67,36 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'prog-2',
-        title: 'JavaScript Functions Deep Dive',
-        module: 'Core Concepts',
+        title: 'Working with Conditionals',
+        module: 'Decision Making',
         moduleNumber: 2,
-        lessonNumber: 3,
+        lessonNumber: 2,
         duration: '30 min',
         difficulty: 'Intermediate',
-        description: 'Master function declarations, expressions, and arrow functions.',
-        icon: '⚡'
+        description: 'Learn how programs choose different paths using if, else, and comparison operators.',
+        icon: '🔀'
       },
       {
         id: 'prog-3',
-        title: 'Working with Loops',
-        module: 'Control Flow',
+        title: 'Loop Patterns',
+        module: 'Iteration',
         moduleNumber: 2,
-        lessonNumber: 5,
+        lessonNumber: 4,
         duration: '35 min',
         difficulty: 'Intermediate',
-        description: 'Understand for loops, while loops, and iteration patterns.',
+        description: 'Understand for loops, while loops, and repetition patterns.',
         icon: '🔁'
+      },
+      {
+        id: 'prog-4',
+        title: 'Functions and Reusable Code',
+        module: 'Core Concepts',
+        moduleNumber: 3,
+        lessonNumber: 1,
+        duration: '30 min',
+        difficulty: 'Intermediate',
+        description: 'Learn how functions make code reusable, organized, and easier to explain.',
+        icon: '⚡'
       },
     ],
     quizQuestions: [
@@ -101,11 +110,11 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'prog-q2',
-        question: 'What does a function return if no return statement is specified?',
-        options: ['0', 'null', 'undefined', 'false'],
-        correctAnswer: 2,
-        explanation: 'JavaScript functions return "undefined" by default if no return statement is provided.',
-        concept: 'Functions'
+        question: 'Which keyword is commonly used to make a decision in code?',
+        options: ['loop', 'if', 'return', 'print'],
+        correctAnswer: 1,
+        explanation: 'Conditionals use if, else if, and else to choose different actions.',
+        concept: 'Conditionals'
       },
       {
         id: 'prog-q3',
@@ -117,19 +126,11 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'prog-q4',
-        question: 'What is the output of: console.log(typeof [1, 2, 3])?',
-        options: ['array', 'object', 'list', 'collection'],
-        correctAnswer: 1,
-        explanation: 'In JavaScript, arrays are actually objects. The typeof operator returns "object" for arrays.',
-        concept: 'Arrays'
-      },
-      {
-        id: 'prog-q5',
-        question: 'How do you access a property called "name" in an object "user"?',
-        options: ['user->name', 'user.name', 'user[name]', 'user::name'],
-        correctAnswer: 1,
-        explanation: 'You can access object properties using dot notation: object.property',
-        concept: 'Objects'
+        question: 'What is the purpose of a function?',
+        options: ['To store data', 'To repeat code with a loop', 'To group reusable instructions', 'To display output only'],
+        correctAnswer: 2,
+        explanation: 'Functions group reusable instructions so you can use them again without rewriting code.',
+        concept: 'Functions'
       },
     ],
     hobbyExamples: [
@@ -147,8 +148,8 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         hobby: 'music',
-        concept: 'Arrays',
-        example: 'Think of arrays as playlists. Just like a playlist contains multiple songs in order, an array stores multiple values in sequence.',
+        concept: 'Conditionals',
+        example: 'Think of music recommendations like a playlist branch: if you like one style, the app chooses that path; otherwise it picks another.',
         code: `let playlist = ['Song 1', 'Song 2', 'Song 3'];\nconsole.log(playlist[0]); // 'Song 1'\nplaylist.push('Song 4'); // Add to end`
       },
     ]
@@ -158,12 +159,10 @@ export const subjectData: Record<string, SubjectData> = {
     id: 'writing',
     name: 'Academic Writing',
     concepts: [
-      { id: 'thesis', name: 'Thesis Statements', mastery: 70, confidence: 'medium', status: 'learning', lastStudied: '1 day ago' },
-      { id: 'structure', name: 'Essay Structure', mastery: 85, confidence: 'high', status: 'mastered', lastStudied: '2 days ago' },
-      { id: 'citation', name: 'Citation & References', mastery: 50, confidence: 'low', status: 'needs-review', lastStudied: '5 days ago', priority: 'high' },
-      { id: 'analysis', name: 'Critical Analysis', mastery: 40, confidence: 'low', status: 'just-started', lastStudied: '1 week ago', priority: 'medium' },
-      { id: 'argumentation', name: 'Argumentation', mastery: 65, confidence: 'medium', status: 'learning', lastStudied: '3 days ago' },
-      { id: 'revision', name: 'Revision Strategies', mastery: 55, confidence: 'medium', status: 'learning', lastStudied: '4 days ago' },
+      { id: 'thesis', name: 'Thesis Statement', mastery: 69, confidence: 'medium', status: 'learning', lastStudied: '1 day ago' },
+      { id: 'paragraphs', name: 'Paragraph Structure', mastery: 83, confidence: 'high', status: 'mastered', lastStudied: '2 days ago' },
+      { id: 'grammar', name: 'Grammar Clarity', mastery: 49, confidence: 'low', status: 'needs-review', lastStudied: '5 days ago', priority: 'high' },
+      { id: 'referencing', name: 'Referencing', mastery: 41, confidence: 'low', status: 'just-started', lastStudied: '1 week ago', priority: 'medium' },
     ],
     lessons: [
       {
@@ -179,25 +178,36 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'writ-2',
-        title: 'The Five-Paragraph Essay',
+        title: 'Building Strong Paragraphs',
         module: 'Structure',
         moduleNumber: 2,
         lessonNumber: 1,
         duration: '35 min',
         difficulty: 'Beginner',
-        description: 'Master the classic essay structure with introduction, body, and conclusion.',
+        description: 'Learn how topic sentences, support, and explanation work together inside one paragraph.',
         icon: '📝'
       },
       {
         id: 'writ-3',
-        title: 'APA Citation Guide',
-        module: 'Research Skills',
+        title: 'Grammar and Clarity Review',
+        module: 'Language Use',
         moduleNumber: 3,
         lessonNumber: 4,
         duration: '40 min',
         difficulty: 'Intermediate',
-        description: 'Learn proper APA citation format for academic papers.',
+        description: 'Improve sentence clarity, punctuation, and grammar for academic writing.',
         icon: '📚'
+      },
+      {
+        id: 'writ-4',
+        title: 'Referencing Sources',
+        module: 'Research Skills',
+        moduleNumber: 3,
+        lessonNumber: 5,
+        duration: '35 min',
+        difficulty: 'Intermediate',
+        description: 'Learn how to cite sources and reference information correctly.',
+        icon: '🔖'
       },
     ],
     quizQuestions: [
@@ -212,18 +222,26 @@ export const subjectData: Record<string, SubjectData> = {
         ],
         correctAnswer: 1,
         explanation: 'A thesis statement presents your main argument or claim that the rest of the essay will support.',
-        concept: 'Thesis Statements'
+        concept: 'Thesis Statement'
       },
       {
         id: 'writ-q2',
-        question: 'In the five-paragraph essay structure, how many body paragraphs should there be?',
-        options: ['Two', 'Three', 'Four', 'Five'],
+        question: 'What belongs in a strong paragraph?',
+        options: ['One unrelated idea only', 'A topic sentence, support, and explanation', 'Only a quotation', 'A title page'],
         correctAnswer: 1,
-        explanation: 'The five-paragraph essay consists of an introduction, three body paragraphs, and a conclusion.',
-        concept: 'Essay Structure'
+        explanation: 'A strong paragraph has one main idea supported by evidence and explanation.',
+        concept: 'Paragraph Structure'
       },
       {
         id: 'writ-q3',
+        question: 'Which sentence is clearest?',
+        options: ['It was like, stuff happened and then it was good.', 'The experiment showed a clear increase in temperature.', 'Thing change.', 'Very good writing is.'],
+        correctAnswer: 1,
+        explanation: 'Clear academic writing uses specific words and complete sentences.',
+        concept: 'Grammar Clarity'
+      },
+      {
+        id: 'writ-q4',
         question: 'When should you cite a source in your essay?',
         options: [
           'Only for direct quotes',
@@ -233,44 +251,18 @@ export const subjectData: Record<string, SubjectData> = {
         ],
         correctAnswer: 2,
         explanation: 'You must cite sources for both direct quotes and paraphrased ideas to avoid plagiarism.',
-        concept: 'Citation'
-      },
-      {
-        id: 'writ-q4',
-        question: 'What is critical analysis?',
-        options: [
-          'Summarizing a text',
-          'Criticizing everything about a text',
-          'Evaluating arguments and evidence in a text',
-          'Copying ideas from a text'
-        ],
-        correctAnswer: 2,
-        explanation: 'Critical analysis involves carefully evaluating the arguments, evidence, and reasoning in a text.',
-        concept: 'Critical Analysis'
-      },
-      {
-        id: 'writ-q5',
-        question: 'What is the best time to revise your essay?',
-        options: [
-          'Immediately after writing',
-          'While you\'re still writing',
-          'After taking a break from it',
-          'Never revise, submit first draft'
-        ],
-        correctAnswer: 2,
-        explanation: 'Taking a break before revising helps you see your work with fresh eyes and catch more errors.',
-        concept: 'Revision'
+        concept: 'Referencing'
       },
     ],
     hobbyExamples: [
       {
         hobby: 'music',
-        concept: 'Essay Structure',
+        concept: 'Paragraph Structure',
         example: 'Think of an essay like a song: the introduction sets the tone, body paragraphs develop themes like verses, and the conclusion brings it home like a final chorus.',
       },
       {
         hobby: 'gaming',
-        concept: 'Argumentation',
+        concept: 'Thesis Statement',
         example: 'Building an argument is like leveling up a character. Each piece of evidence strengthens your position, just like gaining experience points.',
       },
     ]
@@ -280,12 +272,10 @@ export const subjectData: Record<string, SubjectData> = {
     id: 'science',
     name: 'Science',
     concepts: [
-      { id: 'scientific-method', name: 'Scientific Method', mastery: 80, confidence: 'high', status: 'mastered', lastStudied: '2 days ago' },
-      { id: 'matter', name: 'States of Matter', mastery: 65, confidence: 'medium', status: 'learning', lastStudied: '1 day ago' },
-      { id: 'energy', name: 'Energy & Forces', mastery: 55, confidence: 'medium', status: 'learning', lastStudied: '3 days ago' },
-      { id: 'cells', name: 'Cell Biology', mastery: 40, confidence: 'low', status: 'needs-review', lastStudied: '1 week ago', priority: 'high' },
-      { id: 'chemistry', name: 'Basic Chemistry', mastery: 50, confidence: 'low', status: 'just-started', lastStudied: '5 days ago', priority: 'medium' },
-      { id: 'ecosystems', name: 'Ecosystems', mastery: 70, confidence: 'medium', status: 'learning', lastStudied: '2 days ago' },
+      { id: 'scientific-method', name: 'Scientific Method', mastery: 79, confidence: 'high', status: 'mastered', lastStudied: '2 days ago' },
+      { id: 'matter-energy', name: 'Matter and Energy', mastery: 64, confidence: 'medium', status: 'learning', lastStudied: '1 day ago' },
+      { id: 'forces-motion', name: 'Forces and Motion', mastery: 54, confidence: 'medium', status: 'learning', lastStudied: '3 days ago' },
+      { id: 'basic-biology', name: 'Basic Biology', mastery: 43, confidence: 'low', status: 'needs-review', lastStudied: '1 week ago', priority: 'high' },
     ],
     lessons: [
       {
@@ -301,7 +291,7 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'sci-2',
-        title: 'States of Matter Explained',
+        title: 'Matter and Energy Basics',
         module: 'Physical Science',
         moduleNumber: 2,
         lessonNumber: 2,
@@ -312,13 +302,24 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'sci-3',
-        title: 'Introduction to Cell Biology',
-        module: 'Life Science',
+        title: 'Forces and Motion',
+        module: 'Physical Science',
         moduleNumber: 3,
         lessonNumber: 1,
         duration: '40 min',
         difficulty: 'Intermediate',
-        description: 'Discover the building blocks of life and cell structures.',
+        description: 'Discover how force, motion, and speed affect moving objects.',
+        icon: '🧲'
+      },
+      {
+        id: 'sci-4',
+        title: 'Basics of Biology',
+        module: 'Life Science',
+        moduleNumber: 3,
+        lessonNumber: 3,
+        duration: '35 min',
+        difficulty: 'Intermediate',
+        description: 'Learn about cells, organisms, and the basic building blocks of living things.',
         icon: '🧬'
       },
     ],
@@ -338,24 +339,19 @@ export const subjectData: Record<string, SubjectData> = {
       },
       {
         id: 'sci-q2',
-        question: 'Which state of matter has a definite shape and volume?',
-        options: ['Gas', 'Liquid', 'Solid', 'Plasma'],
+        question: 'Which choice best describes matter and energy?',
+        options: ['Matter has mass and energy can cause change', 'They are the same thing', 'Energy is only light', 'Matter cannot move'],
         correctAnswer: 2,
-        explanation: 'Solids have both a definite shape and definite volume because their particles are tightly packed.',
-        concept: 'States of Matter'
+        explanation: 'Matter has mass and takes up space, while energy is the ability to do work or cause change.',
+        concept: 'Matter and Energy'
       },
       {
         id: 'sci-q3',
-        question: 'What is energy?',
-        options: [
-          'The ability to do work',
-          'A type of matter',
-          'A chemical reaction',
-          'A form of light'
-        ],
+        question: 'Which idea is most related to forces and motion?',
+        options: ['An object moving faster when pushed', 'A chemical formula', 'A word list', 'A cell dividing'],
         correctAnswer: 0,
-        explanation: 'Energy is defined as the ability to do work or cause change.',
-        concept: 'Energy'
+        explanation: 'Forces change motion. Pushing or pulling an object can change how fast or in what direction it moves.',
+        concept: 'Forces and Motion'
       },
       {
         id: 'sci-q4',
@@ -363,26 +359,13 @@ export const subjectData: Record<string, SubjectData> = {
         options: ['Atom', 'Molecule', 'Cell', 'Organ'],
         correctAnswer: 2,
         explanation: 'The cell is the basic structural and functional unit of all living organisms.',
-        concept: 'Cell Biology'
-      },
-      {
-        id: 'sci-q5',
-        question: 'What happens during a chemical reaction?',
-        options: [
-          'Matter is destroyed',
-          'Atoms are rearranged to form new substances',
-          'Energy disappears',
-          'Nothing changes'
-        ],
-        correctAnswer: 1,
-        explanation: 'In a chemical reaction, atoms are rearranged to form new substances, but matter is conserved.',
-        concept: 'Chemistry'
+        concept: 'Basic Biology'
       },
     ],
     hobbyExamples: [
       {
         hobby: 'gaming',
-        concept: 'Energy',
+        concept: 'Forces and Motion',
         example: 'Energy in physics is like mana or stamina in games. It can be transferred or transformed, but the total amount stays the same (conservation of energy).',
       },
       {

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export interface LearnerProfile {
   id?: string;
+  role?: 'student' | 'instructor' | 'admin' | '';
   name: string;
   email: string;
   goal: string;
@@ -18,10 +19,20 @@ export interface LearnerProfile {
   explanationLevel: string;
   supportMode: string;
   diagnosticScore?: number;
+  diagnosticWeakConcept?: string;
+  diagnosticConfidence?: 'high' | 'medium' | 'low' | '';
   completedLessons: string[];
   masteryScores: { [key: string]: number };
   studyStreak: number;
   totalStudyMinutes: number;
+  materialsCount?: number;
+  recentTutorActivity?: {
+    concept?: string;
+    question?: string;
+    sourceUsed?: string;
+    answerPreview?: string;
+    createdAt?: string;
+  } | null;
   generatedPlan?: unknown;
 }
 
@@ -34,6 +45,7 @@ interface LearnerContextType {
 }
 
 const defaultLearner: LearnerProfile = {
+  role: 'student',
   name: '',
   email: '',
   goal: '',
@@ -53,6 +65,8 @@ const defaultLearner: LearnerProfile = {
   masteryScores: {},
   studyStreak: 0,
   totalStudyMinutes: 0,
+  materialsCount: 0,
+  recentTutorActivity: null,
 };
 
 const LearnerContext = createContext<LearnerContextType | undefined>(undefined);

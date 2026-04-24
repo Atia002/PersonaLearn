@@ -31,42 +31,83 @@ import HobbyExampleCard from '../../components/HobbyExampleCard';
 import PersonaProfile from '../../components/PersonaProfile';
 import { useLearner } from '../../contexts/LearnerContext';
 import { getSubjectData } from '../../data/subjectData';
+import { askTutor } from '../../utils/learnerApi';
 
 export default function Lesson() {
   const navigate = useNavigate();
-  const { learner } = useLearner();
+  const { learner, updateLearner } = useLearner();
   const subject = getSubjectData(learner?.subject || 'programming');
+  const currentConcept = learner?.diagnosticWeakConcept || subject?.concepts.find((concept) => concept.status !== 'mastered')?.name || subject?.concepts[0]?.name || 'Variables';
   const lessonTitle = subject?.lessons[0]?.title || 'Your Lesson';
   const lessonDescription = subject?.lessons[0]?.description || 'This lesson is personalized to your selected subject and learning goals.';
   const hobbyExample = subject?.hobbyExamples[0];
   const [message, setMessage] = useState('');
+  const [sourceMode, setSourceMode] = useState<'official' | 'uploaded' | 'both'>('both');
+  const [sending, setSending] = useState(false);
   const [chatHistory, setChatHistory] = useState([
     {
       type: 'ai',
-      message: `Hi! I'm your AI tutor. We're learning ${subject?.name || 'your chosen subject'} today, and I can explain concepts using your hobbies. What would you like to know?`,
-      timestamp: '2:00 PM'
+      message: `Hi! I'm your AI tutor. We're learning ${subject?.name || 'your chosen subject'} today, and I can explain ${currentConcept} using your hobbies or saved notes.`,
+      timestamp: '2:00 PM',
+      sourceUsed: 'official'
     }
   ]);
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    
-    setChatHistory([...chatHistory, {
+  const handleSendMessage = async (actionType: 'normal' | 'explain_simpler' | 'another_example' | 'use_hobby' | 'uploaded_only' = 'normal', promptOverride?: string) => {
+    const questionText = (promptOverride || message).trim();
+
+    if (!questionText) {
+      return;
+    }
+
+    const userMessage = {
       type: 'user',
-      message: message,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-    
-    // Simulate AI response
-    setTimeout(() => {
-      setChatHistory(prev => [...prev, {
-        type: 'ai',
-        message: "Great question! Let me explain that with a gaming analogy...",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 1000);
-    
+      message: questionText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setChatHistory((previous) => [...previous, userMessage]);
     setMessage('');
+    setSending(true);
+
+    try {
+      const response = await askTutor({
+        userId: learner?.id || '',
+        subject: learner?.subject || 'programming',
+        concept: currentConcept,
+        question: questionText,
+        sourceMode,
+        learnerProfile: learner || {},
+        actionType,
+      });
+
+      const aiMessage = {
+        type: 'ai',
+        message: response.answer,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sourceUsed: response.sourceUsed,
+      };
+
+      setChatHistory((previous) => [...previous, aiMessage]);
+      updateLearner({
+        recentTutorActivity: {
+          concept: currentConcept,
+          question: questionText,
+          sourceUsed: response.sourceUsed,
+          answerPreview: response.answer.slice(0, 140),
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {
+      setChatHistory((previous) => [...previous, {
+        type: 'ai',
+        message: 'I could not reach the tutor service, so I am using the lesson content and your profile to keep the explanation going.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sourceUsed: sourceMode,
+      }]);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -366,8 +407,8 @@ console.log(volume); // Output: 75`}
           {chatHistory.map((chat, index) => (
             <div key={index} className={`flex gap-3 ${chat.type === 'user' ? 'flex-row-reverse' : ''}`}>
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                chat.type === 'ai' 
-                  ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
+                chat.type === 'ai'
+                  ? 'bg-gradient-to-br from-purple-500 to-pink-500'
                   : 'bg-gradient-to-br from-blue-500 to-teal-500'
               }`}>
                 {chat.type === 'ai' ? (
@@ -378,8 +419,8 @@ console.log(volume); // Output: 75`}
               </div>
               <div className={`flex-1 ${chat.type === 'user' ? 'text-right' : ''}`}>
                 <div className={`inline-block max-w-[85%] p-4 rounded-2xl ${
-                  chat.type === 'ai' 
-                    ? 'bg-white border border-gray-200 shadow-sm' 
+                  chat.type === 'ai'
+                    ? 'bg-white border border-gray-200 shadow-sm'
                     : 'bg-gradient-to-r from-blue-500 to-teal-500 text-white'
                 }`}>
                   <p className="text-sm leading-relaxed">{chat.message}</p>
@@ -387,7 +428,10 @@ console.log(volume); // Output: 75`}
                 <div className="flex items-center gap-3 mt-2 px-2">
                   <span className="text-xs text-gray-500">{chat.timestamp}</span>
                   {chat.type === 'ai' && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 items-center">
+                      <span className="text-[10px] uppercase tracking-wide text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                        {chat.sourceUsed || 'official'}
+                      </span>
                       <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-gray-100">
                         <ThumbsUp className="w-3 h-3" />
                       </Button>
@@ -409,60 +453,105 @@ console.log(volume); // Output: 75`}
         </div>
 
         {/* Quick Actions */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200">
-          <p className="text-xs font-medium text-gray-500 uppercase mb-3">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="p-3 bg-white hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl text-left text-xs transition-all group">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-purple-500" />
-                <span className="font-medium">Simpler</span>
-              </div>
-              <span className="text-gray-500 text-xs">Explain easier</span>
-            </button>
-            <button className="p-3 bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl text-left text-xs transition-all group">
-              <div className="flex items-center gap-2 mb-1">
-                <Gamepad2 className="w-4 h-4 text-blue-500" />
-                <span className="font-medium">Gaming</span>
-              </div>
-              <span className="text-gray-500 text-xs">Use examples</span>
-            </button>
-            <button className="p-3 bg-white hover:bg-teal-50 border border-gray-200 hover:border-teal-300 rounded-xl text-left text-xs transition-all group">
-              <div className="flex items-center gap-2 mb-1">
-                <BookOpen className="w-4 h-4 text-teal-500" />
-                <span className="font-medium">Summarize</span>
-              </div>
-              <span className="text-gray-500 text-xs">Key points</span>
-            </button>
-            <button className="p-3 bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-300 rounded-xl text-left text-xs transition-all group">
-              <div className="flex items-center gap-2 mb-1">
-                <Lightbulb className="w-4 h-4 text-orange-500" />
-                <span className="font-medium">Quiz Me</span>
-              </div>
-              <span className="text-gray-500 text-xs">Test knowledge</span>
-            </button>
+        <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-4">
+          <div>
+            <p className="mb-3 text-xs font-medium uppercase text-gray-500">Quick Actions</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-xl border border-gray-200 bg-white p-3 text-left text-xs transition-all hover:border-purple-300 hover:bg-purple-50"
+                onClick={() => void handleSendMessage('explain_simpler', 'Explain this more simply.')}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  <span className="font-medium">Simpler</span>
+                </div>
+                <span className="text-gray-500">Explain easier</span>
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl border border-gray-200 bg-white p-3 text-left text-xs transition-all hover:border-blue-300 hover:bg-blue-50"
+                onClick={() => void handleSendMessage('another_example', 'Give me another example.')}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <Gamepad2 className="h-4 w-4 text-blue-500" />
+                  <span className="font-medium">Gaming</span>
+                </div>
+                <span className="text-gray-500">Use examples</span>
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl border border-gray-200 bg-white p-3 text-left text-xs transition-all hover:border-teal-300 hover:bg-teal-50"
+                onClick={() => void handleSendMessage('use_hobby', 'Use my hobby in the example.')}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-teal-500" />
+                  <span className="font-medium">Summarize</span>
+                </div>
+                <span className="text-gray-500">Use notes</span>
+              </button>
+
+              <button
+                type="button"
+                className="rounded-xl border border-gray-200 bg-white p-3 text-left text-xs transition-all hover:border-orange-300 hover:bg-orange-50"
+                onClick={() => void handleSendMessage('uploaded_only', 'Use my uploaded notes.')}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-orange-500" />
+                  <span className="font-medium">Quiz Me</span>
+                </div>
+                <span className="text-gray-500">Test knowledge</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase text-gray-500">Source Mode</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'official', label: 'Official content only' },
+                { id: 'uploaded', label: 'My uploaded notes only' },
+                { id: 'both', label: 'Both' },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setSourceMode(option.id as 'official' | 'uploaded' | 'both')}
+                  className={`rounded-xl border px-3 py-2 text-xs transition-all ${
+                    sourceMode === option.id
+                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-purple-300'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-200">
+        <div className="border-t border-gray-200 bg-white p-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Ask anything about functions..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-1 border-gray-300 focus:border-purple-500 rounded-xl"
+              onKeyDown={(e) => e.key === 'Enter' && void handleSendMessage()}
+              placeholder={`Ask about ${currentConcept}...`}
+              className="flex-1 rounded-xl border-gray-300 focus:border-purple-500"
             />
-            <Button 
-              size="icon"
-              onClick={handleSendMessage}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl w-11 h-11 shadow-lg"
+            <Button
+              onClick={() => void handleSendMessage()}
+              disabled={sending}
+              className="h-11 w-11 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:from-purple-600 hover:to-pink-600"
             >
-              <Send className="w-5 h-5" />
+              {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
           </div>
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            Powered by AI • Personalized to your learning style
+          <p className="mt-2 text-center text-xs text-gray-500">
+            Powered by AI when available, with a deterministic fallback when the key is missing.
           </p>
         </div>
       </div>

@@ -31,6 +31,7 @@ export default function SignUp() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: formData.role as 'student' | 'instructor' | 'admin',
         profile: defaultLearner,
       });
 
@@ -39,12 +40,16 @@ export default function SignUp() {
         id: response.learner.id,
         name: response.learner.name,
         email: response.learner.email,
+        role: response.learner.role || (formData.role as 'student' | 'instructor' | 'admin'),
       });
 
-      if (formData.role === 'student') {
-        navigate('/onboarding');
+      const role = response.learner.role || formData.role;
+      if (role === 'instructor') {
+        navigate('/instructor');
+      } else if (role === 'admin') {
+        navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate('/onboarding');
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to create your account.');

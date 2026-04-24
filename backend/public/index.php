@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use PersonaLearn\Services\FreeContentService;
+use PersonaLearn\Services\MaterialService;
 use PersonaLearn\Services\PlanService;
+use PersonaLearn\Services\TutorService;
 use PersonaLearn\Storage\JsonStore;
 use PersonaLearn\Support\Request;
 use PersonaLearn\Support\Response;
@@ -12,7 +14,9 @@ require_once __DIR__ . '/../src/Support/Request.php';
 require_once __DIR__ . '/../src/Support/Response.php';
 require_once __DIR__ . '/../src/Storage/JsonStore.php';
 require_once __DIR__ . '/../src/Services/FreeContentService.php';
+require_once __DIR__ . '/../src/Services/MaterialService.php';
 require_once __DIR__ . '/../src/Services/PlanService.php';
+require_once __DIR__ . '/../src/Services/TutorService.php';
 
 setCorsHeaders();
 
@@ -23,8 +27,11 @@ if (Request::method() === 'OPTIONS') {
 
 $usersStore = new JsonStore(__DIR__ . '/../storage/users.json');
 $plansStore = new JsonStore(__DIR__ . '/../storage/plans.json');
+$materialsStore = new JsonStore(__DIR__ . '/../storage/materials.json');
 $freeContent = new FreeContentService();
 $planService = new PlanService($freeContent);
+$materialService = new MaterialService($materialsStore);
+$tutorService = new TutorService($materialService);
 
 $method = Request::method();
 $path = Request::path();
@@ -43,6 +50,7 @@ if ($method === 'POST' && $path === '/api/learners/register') {
     $name = trim((string) ($payload['name'] ?? ''));
     $email = strtolower(trim((string) ($payload['email'] ?? '')));
     $password = (string) ($payload['password'] ?? '');
+    $role = in_array((string) ($payload['role'] ?? 'student'), ['student', 'instructor', 'admin'], true) ? (string) $payload['role'] : 'student';
 
     if ($name === '' || $email === '' || $password === '') {
         Response::error('Name, email, and password are required.', 422);
@@ -67,6 +75,7 @@ if ($method === 'POST' && $path === '/api/learners/register') {
         'id' => $id,
         'name' => $name,
         'email' => $email,
+        'role' => $role,
         'passwordHash' => password_hash($password, PASSWORD_DEFAULT),
         'profile' => $payload['profile'] ?? [],
         'createdAt' => gmdate('c'),
@@ -81,6 +90,8 @@ if ($method === 'POST' && $path === '/api/learners/register') {
             'id' => $id,
             'name' => $name,
             'email' => $email,
+                'role' => $role,
+                'profile' => $payload['profile'] ?? [],
         ],
     ], 201);
     exit;
@@ -106,6 +117,7 @@ if ($method === 'POST' && $path === '/api/auth/login') {
                     'id' => $user['id'] ?? '',
                     'name' => $user['name'] ?? '',
                     'email' => $user['email'] ?? '',
+                    'role' => $user['role'] ?? 'student',
                     'profile' => $user['profile'] ?? [],
                 ],
             ]);
@@ -141,10 +153,120 @@ if ($method === 'POST' && $path === '/api/plans/generate') {
     ];
     $plansStore->putAll($plans);
 
+    if ($learnerId !== 'guest') {
+        $users = $usersStore->all();
+        foreach ($users as $index => $user) {
+            if ((string) ($user['id'] ?? '') !== $learnerId) {
+                continue;
+            }
+
+            $users[$index]['profile'] = array_merge((array) ($user['profile'] ?? []), $profile, [
+                'generatedPlan' => $plan,
+                'weakConcept' => $plan['weakConcept'] ?? ($profile['weakConcept'] ?? ''),
+            ]);
+            $usersStore->putAll($users);
+            break;
+        }
+    }
+
     Response::json([
         'ok' => true,
         'plan' => $plan,
     ]);
+    exit;
+}
+
+if ($method === 'POST' && $path === '/api/materials/save') {
+    $payload = Request::json();
+
+    try {
+        $record = $materialService->save($payload);
+    } catch (InvalidArgumentException $exception) {
+        Response::error($exception->getMessage(), 422);
+        exit;
+    }
+
+    $userId = (string) ($record['userId'] ?? '');
+    if ($userId !== '') {
+        $users = $usersStore->all();
+        foreach ($users as $index => $user) {
+            if ((string) ($user['id'] ?? '') !== $userId) {
+                continue;
+            }
+
+            $profile = (array) ($user['profile'] ?? []);
+            $materialsCount = (int) ($profile['materialsCount'] ?? 0);
+            $profile['materialsCount'] = $materialsCount + 1;
+            $profile['lastMaterialSavedAt'] = $record['createdAt'];
+            $users[$index]['profile'] = $profile;
+            $usersStore->putAll($users);
+            break;
+        }
+    }
+
+    Response::json([
+        'ok' => true,
+        'material' => $record,
+    ], 201);
+    exit;
+}
+
+if ($method === 'GET' && $path === '/api/materials') {
+    $userId = (string) (Request::query('userId', '') ?? '');
+    if ($userId === '') {
+        Response::error('userId query parameter is required.', 422);
+        exit;
+    }
+
+    Response::json([
+        'ok' => true,
+        'materials' => $materialService->listForUser($userId),
+    ]);
+    exit;
+}
+
+if ($method === 'GET' && $path === '/api/materials/latest') {
+    $userId = (string) (Request::query('userId', '') ?? '');
+    $concept = Request::query('concept', null);
+    if ($userId === '') {
+        Response::error('userId query parameter is required.', 422);
+        exit;
+    }
+
+    Response::json([
+        'ok' => true,
+        'material' => $materialService->latestForUser($userId, $concept !== null ? (string) $concept : null),
+    ]);
+    exit;
+}
+
+if ($method === 'POST' && $path === '/api/tutor/ask') {
+    $payload = Request::json();
+    $response = $tutorService->answer($payload);
+
+    $userId = (string) ($payload['userId'] ?? '');
+    if ($userId !== '') {
+        $users = $usersStore->all();
+        foreach ($users as $index => $user) {
+            if ((string) ($user['id'] ?? '') !== $userId) {
+                continue;
+            }
+
+            $profile = (array) ($user['profile'] ?? []);
+            $profile['recentTutorActivity'] = [
+                'concept' => (string) ($payload['concept'] ?? ''),
+                'question' => (string) ($payload['question'] ?? ''),
+                'sourceUsed' => $response['sourceUsed'] ?? 'official',
+                'answerPreview' => substr((string) ($response['answer'] ?? ''), 0, 140),
+                'createdAt' => gmdate('c'),
+            ];
+            $users[$index]['profile'] = $profile;
+            $usersStore->putAll($users);
+            break;
+        }
+    }
+
+    Response::json($response);
     exit;
 }
 
@@ -215,6 +337,7 @@ if ($method === 'GET' && preg_match('#^/api/learners/([^/]+)$#', $path, $matches
                     'id' => $user['id'] ?? '',
                     'name' => $user['name'] ?? '',
                     'email' => $user['email'] ?? '',
+                    'role' => $user['role'] ?? 'student',
                     'profile' => $user['profile'] ?? [],
                 ],
             ]);
