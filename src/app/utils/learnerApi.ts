@@ -70,7 +70,7 @@ export async function generateLearningPlan(profile: Partial<LearnerProfile>) {
   return apiRequest<PlanResponse>('/api/plans/generate', {
     method: 'POST',
     json: {
-      learnerId: profile.email || 'guest',
+      learnerId: profile.id || profile.email || 'guest',
       profile,
     },
   });

@@ -50,7 +50,8 @@ if ($method === 'POST' && $path === '/api/learners/register') {
     $name = trim((string) ($payload['name'] ?? ''));
     $email = strtolower(trim((string) ($payload['email'] ?? '')));
     $password = (string) ($payload['password'] ?? '');
-    $role = in_array((string) ($payload['role'] ?? 'student'), ['student', 'instructor', 'admin'], true) ? (string) $payload['role'] : 'student';
+    $requestedRole = (string) ($payload['role'] ?? 'student');
+    $role = in_array($requestedRole, ['student', 'instructor', 'admin'], true) ? $requestedRole : 'student';
 
     if ($name === '' || $email === '' || $password === '') {
         Response::error('Name, email, and password are required.', 422);
