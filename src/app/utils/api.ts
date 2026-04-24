@@ -6,9 +6,13 @@ type RequestOptions = RequestInit & {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
+  const method = (options.method || 'GET').toUpperCase();
 
-  if (options.json !== undefined) {
-    headers.set('Content-Type', 'application/json');
+  if (options.json !== undefined && method !== 'GET' && method !== 'HEAD') {
+    headers.set('Content-Type', 'text/plain');
+    // Keep requests CORS-simple for shared hosting by removing non-safelisted headers.
+    headers.delete('Authorization');
+    headers.delete('X-Requested-With');
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
