@@ -10,37 +10,42 @@ use PersonaLearn\Storage\JsonStore;
 use PersonaLearn\Support\Request;
 use PersonaLearn\Support\Response;
 
-require_once __DIR__ . '/../src/Support/Request.php';
-require_once __DIR__ . '/../src/Support/Response.php';
-require_once __DIR__ . '/../src/Storage/JsonStore.php';
-require_once __DIR__ . '/../src/Services/FreeContentService.php';
-require_once __DIR__ . '/../src/Services/MaterialService.php';
-require_once __DIR__ . '/../src/Services/PlanService.php';
-require_once __DIR__ . '/../src/Services/TutorService.php';
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
 
+$rootDir = detectRootDir(__DIR__);
+
+require_once $rootDir . '/src/Support/Request.php';
+require_once $rootDir . '/src/Support/Response.php';
+require_once $rootDir . '/src/Storage/JsonStore.php';
+require_once $rootDir . '/src/Services/FreeContentService.php';
+require_once $rootDir . '/src/Services/MaterialService.php';
+require_once $rootDir . '/src/Services/PlanService.php';
+require_once $rootDir . '/src/Services/TutorService.php';
+
+loadEnvFile($rootDir . '/.env');
 setCorsHeaders();
+registerJsonErrorHandling();
 
 if (Request::method() === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-$usersStore = new JsonStore(__DIR__ . '/../storage/users.json');
-$plansStore = new JsonStore(__DIR__ . '/../storage/plans.json');
-$materialsStore = new JsonStore(__DIR__ . '/../storage/materials.json');
+$usersStore = new JsonStore($rootDir . '/storage/users.json');
+$plansStore = new JsonStore($rootDir . '/storage/plans.json');
+$materialsStore = new JsonStore($rootDir . '/storage/materials.json');
 $freeContent = new FreeContentService();
 $planService = new PlanService($freeContent);
 $materialService = new MaterialService($materialsStore);
 $tutorService = new TutorService($materialService);
 
 $method = Request::method();
-$path = Request::path();
+$path = normalizeApiPath(Request::path());
 
 if ($method === 'GET' && $path === '/api/health') {
     Response::json([
         'ok' => true,
-        'service' => 'PersonaLearn PHP API',
-        'time' => gmdate('c'),
     ]);
     exit;
 }
@@ -357,12 +362,144 @@ Response::error('Route not found.', 404, [
 
 function setCorsHeaders(): void
 {
-    $configuredOrigin = getenv('API_ALLOWED_ORIGIN') ?: 'http://localhost:5173';
     $requestOrigin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
-    $allowedOrigins = array_unique([$configuredOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173']);
-    $allowedOrigin = in_array($requestOrigin, $allowedOrigins, true) ? $requestOrigin : $configuredOrigin;
+    $configured = envValue('API_ALLOWED_ORIGIN', '*');
+    $configuredOrigins = array_values(array_filter(array_map('trim', explode(',', $configured)), static fn(string $v): bool => $v !== ''));
+    if ($configuredOrigins === []) {
+        $configuredOrigins = ['*'];
+    }
 
-    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-    header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    $allowedOrigins = array_values(array_unique(array_merge(
+        $configuredOrigins,
+        ['http://localhost:5173', 'http://127.0.0.1:5173']
+    )));
+
+    $isLocalDevOrigin = preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $requestOrigin) === 1;
+    $isVercelOrigin = preg_match('#^https://[a-z0-9-]+\.vercel\.app$#i', $requestOrigin) === 1;
+
+    $allowAnyOrigin = in_array('*', $allowedOrigins, true);
+    if ($allowAnyOrigin) {
+        header('Access-Control-Allow-Origin: *');
+    } elseif ($requestOrigin !== '' && ($isLocalDevOrigin || $isVercelOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
+        header('Access-Control-Allow-Origin: ' . $requestOrigin);
+        header('Vary: Origin');
+    } elseif ($allowedOrigins !== []) {
+        header('Access-Control-Allow-Origin: ' . $allowedOrigins[0]);
+        header('Vary: Origin');
+    }
+
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    header('Access-Control-Max-Age: 86400');
+}
+
+function loadEnvFile(string $path): void
+{
+    if (!is_file($path) || !is_readable($path)) {
+        return;
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        return;
+    }
+
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '' || str_starts_with($trimmed, '#')) {
+            continue;
+        }
+
+        $delimiterPos = strpos($trimmed, '=');
+        if ($delimiterPos === false) {
+            continue;
+        }
+
+        $key = trim(substr($trimmed, 0, $delimiterPos));
+        $value = trim(substr($trimmed, $delimiterPos + 1));
+        if ($key === '') {
+            continue;
+        }
+
+        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+            $value = substr($value, 1, -1);
+        }
+
+        if (getenv($key) !== false || array_key_exists($key, $_ENV)) {
+            continue;
+        }
+
+        putenv($key . '=' . $value);
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+    }
+}
+
+function envValue(string $key, string $default = ''): string
+{
+    $env = getenv($key);
+    if ($env !== false) {
+        return trim((string) $env);
+    }
+
+    if (isset($_ENV[$key])) {
+        return trim((string) $_ENV[$key]);
+    }
+
+    return $default;
+}
+
+function detectRootDir(string $currentDir): string
+{
+    $candidates = [dirname($currentDir), $currentDir];
+    foreach ($candidates as $candidate) {
+        if (is_dir($candidate . '/src') && is_dir($candidate . '/storage')) {
+            return $candidate;
+        }
+    }
+
+    return dirname($currentDir);
+}
+
+function normalizeApiPath(string $path): string
+{
+    $normalized = $path;
+
+    if (str_starts_with($normalized, '/index.php/')) {
+        $normalized = substr($normalized, strlen('/index.php'));
+    } elseif ($normalized === '/index.php') {
+        $normalized = '/';
+    }
+
+    $scriptDir = (string) dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'));
+    if ($scriptDir !== '' && $scriptDir !== '/' && str_starts_with($normalized, $scriptDir . '/')) {
+        $normalized = substr($normalized, strlen($scriptDir));
+    }
+
+    return rtrim($normalized, '/') ?: '/';
+}
+
+function registerJsonErrorHandling(): void
+{
+    set_exception_handler(static function (\Throwable $exception): void {
+        if (!headers_sent()) {
+            Response::error('Internal server error.', 500);
+        }
+    });
+
+    register_shutdown_function(static function (): void {
+        $error = error_get_last();
+        if ($error === null) {
+            return;
+        }
+
+        $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+        if (!in_array((int) ($error['type'] ?? 0), $fatalTypes, true)) {
+            return;
+        }
+
+        if (!headers_sent()) {
+            Response::error('Internal server error.', 500);
+        }
+    });
 }
