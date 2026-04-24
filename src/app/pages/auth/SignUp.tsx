@@ -35,15 +35,20 @@ export default function SignUp() {
         profile: defaultLearner,
       });
 
+      const learner = response.learner;
+      if (!learner?.id) {
+        throw new Error('Signup succeeded but no user id was returned. Please try again.');
+      }
+
       setLearner({
         ...defaultLearner,
-        id: response.learner.id,
-        name: response.learner.name,
-        email: response.learner.email,
-        role: response.learner.role || (formData.role as 'student' | 'instructor' | 'admin'),
+        id: learner.id,
+        name: learner.name,
+        email: learner.email,
+        role: learner.role || (formData.role as 'student' | 'instructor' | 'admin'),
       });
 
-      const role = response.learner.role || formData.role;
+      const role = learner.role || formData.role;
       if (role === 'instructor') {
         navigate('/instructor');
       } else if (role === 'admin') {

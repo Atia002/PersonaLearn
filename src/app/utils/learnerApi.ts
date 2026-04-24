@@ -13,6 +13,8 @@ export interface LearnerResponse {
   token?: string;
 }
 
+type LearnerResponseEnvelope = Partial<Record<'ok' | 'token' | 'learner' | 'user' | 'data', unknown>> & Record<string, unknown>;
+
 export interface PlanResponse {
   ok: boolean;
   plan: Record<string, unknown>;
@@ -41,19 +43,24 @@ export async function registerLearner(payload: {
   name: string;
   email: string;
   password: string;
+  role?: 'student' | 'instructor' | 'admin';
   profile?: Partial<LearnerProfile>;
 }) {
-  return apiRequest<LearnerResponse>('/api/learners/register', {
+  const response = await apiRequest<LearnerResponseEnvelope>('/api/learners/register', {
     method: 'POST',
     json: payload,
   });
+
+  return normalizeLearnerResponse(response);
 }
 
 export async function loginLearner(payload: { email: string; password: string }) {
-  return apiRequest<LearnerResponse>('/api/auth/login', {
+  const response = await apiRequest<LearnerResponseEnvelope>('/api/auth/login', {
     method: 'POST',
     json: payload,
   });
+
+  return normalizeLearnerResponse(response);
 }
 
 export async function updateLearnerProfile(
@@ -123,4 +130,39 @@ export async function askTutor(payload: {
     method: 'POST',
     json: payload,
   });
+}
+
+function normalizeLearnerResponse(response: LearnerResponseEnvelope): LearnerResponse {
+  const candidate = asRecord(response.learner) || asRecord(response.user) || asRecord(response.data) || asRecord(response);
+  if (!candidate) {
+    throw new Error('Unexpected signup/login response format.');
+  }
+
+  const id = asNonEmptyString(candidate.id);
+  if (!id) {
+    throw new Error('Account created, but user id is missing in server response. Please try again.');
+  }
+
+  const roleValue = asNonEmptyString(candidate.role);
+  const role = roleValue === 'student' || roleValue === 'instructor' || roleValue === 'admin' ? roleValue : undefined;
+
+  return {
+    ok: response.ok === undefined ? true : Boolean(response.ok),
+    token: asNonEmptyString(response.token),
+    learner: {
+      id,
+      name: asNonEmptyString(candidate.name) || '',
+      email: asNonEmptyString(candidate.email) || '',
+      role,
+      profile: asRecord(candidate.profile) as Partial<LearnerProfile> | undefined,
+    },
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function asNonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
 }
