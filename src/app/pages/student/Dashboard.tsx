@@ -38,7 +38,7 @@ import { Input } from '../../components/ui/input';
 import PersonaProfile from '../../components/PersonaProfile';
 import HobbyExampleCard from '../../components/HobbyExampleCard';
 import { useLearner } from '../../contexts/LearnerContext';
-import { getLearnerFirstName, getLearnerInitials } from '../../utils/learnerHelpers';
+import { getGoalDisplayName, getLearnerFirstName, getLearnerInitials, getPaceDisplayName } from '../../utils/learnerHelpers';
 import { getSubjectData } from '../../data/subjectData';
 
 export default function Dashboard() {
@@ -57,6 +57,12 @@ export default function Dashboard() {
   const nextLesson = generatedPlan.nextLesson || planItems[0] || subject?.lessons[0];
   const uploadedNotesCount = learner?.materialsCount || 0;
   const recentTutorActivity = learner?.recentTutorActivity;
+  const interestLabel = learner?.hobbies?.length ? learner.hobbies.join(' & ') : 'gaming';
+  const goalLabel = getGoalDisplayName(learner?.goal || 'exam');
+  const paceLabel = getPaceDisplayName(learner?.pace || 'balanced');
+  const confidenceLabel = learner?.diagnosticConfidence || (learner?.confidence && learner.confidence >= 75 ? 'high' : learner?.confidence && learner.confidence >= 50 ? 'medium' : 'low');
+  const personalizedRecommendation = `You are starting with ${weakConcept} because your diagnostic showed weakness in this topic, your goal is ${goalLabel}, your pace is ${paceLabel}, and your confidence is ${confidenceLabel}.`;
+  const hobbyExampleText = `Example adapted to your interest in ${interestLabel}. If you like ${interestLabel}, think of ${weakConcept} like a familiar pattern that repeats with small changes until the answer clicks.`;
 
   const navItems = [
     { icon: <Home className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard', active: true },
@@ -258,7 +264,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Flame className="w-12 h-12 text-orange-300" />
-                  <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">{uploadedNotesCount} Notes Saved</span>
+                  <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Uploaded notes: {uploadedNotesCount}</span>
                 </div>
               </div>
 
@@ -343,9 +349,7 @@ export default function Dashboard() {
                     <div className="flex-1 space-y-3">
                       <div>
                         <h4 className="font-bold text-xl mb-2">{nextLesson?.taskTitle || nextLesson?.title || 'Your Next Lesson'}</h4>
-                        <p className="text-gray-600">
-                          {generatedPlan.summary || 'Your next lesson is generated from your selected subject, weak concept, and saved learner profile.'}
-                        </p>
+                        <p className="text-gray-600">{personalizedRecommendation}</p>
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-gray-500">
@@ -376,19 +380,11 @@ export default function Dashboard() {
                         <div className="space-y-2 text-sm text-gray-700">
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>{weakConcept} is moved to the front because your diagnostic showed it needs work</span>
+                            <span>{personalizedRecommendation}</span>
                           </div>
                           <div className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Your pace and support mode balance challenge and review</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>Examples are matched to your hobbies from the saved learner profile</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>The weekly schedule comes from your onboarding preferences and available hours</span>
+                            <span>The weekly schedule comes from your onboarding preferences and available hours, and your saved notes count is ready for tutor use.</span>
                           </div>
                           {recentTutorActivity?.answerPreview && (
                             <div className="flex items-start gap-2">
@@ -422,10 +418,11 @@ export default function Dashboard() {
                     Personalized
                   </Badge>
                 </div>
+                <p className="text-sm text-gray-600">{hobbyExampleText}</p>
                 <HobbyExampleCard
-                  hobby="gaming"
-                  concept="JavaScript Variables"
-                  example="Think of variables like a player's health bar. Just like health can increase or decrease during gameplay, a variable's value can change throughout your program."
+                  hobby={learner?.hobbies?.[0] || 'gaming'}
+                  concept={weakConcept}
+                  example={hobbyExampleText}
                   code={`let playerHealth = 100;\nplayerHealth -= 20; // Takes damage\nplayerHealth += 15; // Healing potion\nconsole.log(playerHealth); // 95`}
                 />
               </div>

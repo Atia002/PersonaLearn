@@ -52,6 +52,7 @@ export default function Lesson() {
       sourceUsed: 'official'
     }
   ]);
+  const sourceModeLabel = sourceMode === 'official' ? 'official' : sourceMode === 'uploaded' ? 'uploaded' : 'both';
 
   const handleSendMessage = async (actionType: 'normal' | 'explain_simpler' | 'another_example' | 'use_hobby' | 'uploaded_only' = 'normal', promptOverride?: string) => {
     const questionText = (promptOverride || message).trim();
@@ -399,6 +400,11 @@ console.log(volume); // Output: 75`}
           <div className="flex items-center gap-2 text-xs text-purple-100">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             <span>Online & Ready to Help</span>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/90">
+            <span className="rounded-full bg-white/15 px-2.5 py-1">Uses learner profile</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-1">Uses uploaded notes when selected</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-1">Source mode: {sourceModeLabel}</span>
           </div>
         </div>
 
