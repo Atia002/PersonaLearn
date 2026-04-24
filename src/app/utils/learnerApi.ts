@@ -1,19 +1,16 @@
 import { apiRequest } from './api';
 import type { LearnerProfile } from '../contexts/LearnerContext';
 
-export interface LearnerResponse {
-  ok: boolean;
-  learner: {
-    id: string;
-    name: string;
-    email: string;
-    role?: 'student' | 'instructor' | 'admin';
-    profile?: Partial<LearnerProfile>;
-  };
+export interface NormalizedAuthResponse {
+  userId: string;
+  name: string;
+  email: string;
+  role?: 'student' | 'instructor' | 'admin';
   token?: string;
+  profile?: Partial<LearnerProfile>;
 }
 
-type LearnerResponseEnvelope = Partial<Record<'ok' | 'token' | 'learner' | 'user' | 'data', unknown>> & Record<string, unknown>;
+type AuthResponseEnvelope = Partial<Record<'ok' | 'token' | 'learner' | 'user' | 'data' | 'id' | 'userId', unknown>> & Record<string, unknown>;
 
 export interface PlanResponse {
   ok: boolean;
@@ -46,28 +43,28 @@ export async function registerLearner(payload: {
   role?: 'student' | 'instructor' | 'admin';
   profile?: Partial<LearnerProfile>;
 }) {
-  const response = await apiRequest<LearnerResponseEnvelope>('/api/learners/register', {
+  const response = await apiRequest<AuthResponseEnvelope | string>('/api/learners/register', {
     method: 'POST',
     json: payload,
   });
 
-  return normalizeLearnerResponse(response);
+  return normalizeAuthResponse(response, 'signup');
 }
 
 export async function loginLearner(payload: { email: string; password: string }) {
-  const response = await apiRequest<LearnerResponseEnvelope>('/api/auth/login', {
+  const response = await apiRequest<AuthResponseEnvelope | string>('/api/auth/login', {
     method: 'POST',
     json: payload,
   });
 
-  return normalizeLearnerResponse(response);
+  return normalizeAuthResponse(response, 'login');
 }
 
 export async function updateLearnerProfile(
   id: string,
   payload: Partial<LearnerProfile> & { name?: string; email?: string; password?: string; profile?: Partial<LearnerProfile> },
 ) {
-  return apiRequest<LearnerResponse>(`/api/learners/${id}`, {
+  return apiRequest<{ ok: boolean; learner: { id: string; name: string; email: string; profile?: Partial<LearnerProfile> } }>(`/api/learners/${id}`, {
     method: 'PUT',
     json: payload,
   });
@@ -132,31 +129,86 @@ export async function askTutor(payload: {
   });
 }
 
-function normalizeLearnerResponse(response: LearnerResponseEnvelope): LearnerResponse {
-  const candidate = asRecord(response.learner) || asRecord(response.user) || asRecord(response.data) || asRecord(response);
-  if (!candidate) {
+function normalizeAuthResponse(rawResponse: AuthResponseEnvelope | string, flow: 'signup' | 'login'): NormalizedAuthResponse {
+  const response = normalizeEnvelope(rawResponse);
+  if (!response) {
     throw new Error('Unexpected signup/login response format.');
   }
 
-  const id = asNonEmptyString(candidate.id);
+  const data = asRecord(response.data);
+  const candidates = [
+    asRecord(response.learner),
+    asRecord(response.user),
+    asRecord(data?.learner),
+    asRecord(data?.user),
+    data,
+    response,
+  ].filter((value): value is Record<string, unknown> => Boolean(value));
+
+  const id = firstString(candidates, ['id', 'userId']);
   if (!id) {
-    throw new Error('Account created, but user id is missing in server response. Please try again.');
+    console.error('Auth response missing user id.', response);
+    throw new Error(`${capitalize(flow)} succeeded but user id is missing in server response. Check console for response payload.`);
   }
 
-  const roleValue = asNonEmptyString(candidate.role);
+  const roleValue = firstString(candidates, ['role']);
   const role = roleValue === 'student' || roleValue === 'instructor' || roleValue === 'admin' ? roleValue : undefined;
 
   return {
-    ok: response.ok === undefined ? true : Boolean(response.ok),
-    token: asNonEmptyString(response.token),
-    learner: {
-      id,
-      name: asNonEmptyString(candidate.name) || '',
-      email: asNonEmptyString(candidate.email) || '',
-      role,
-      profile: asRecord(candidate.profile) as Partial<LearnerProfile> | undefined,
-    },
+    userId: id,
+    name: firstString(candidates, ['name']) || '',
+    email: firstString(candidates, ['email']) || '',
+    role,
+    token: firstString([response, ...(data ? [data] : [])], ['token']),
+    profile: firstRecord(candidates, ['profile']) as Partial<LearnerProfile> | undefined,
   };
+}
+
+function normalizeEnvelope(value: AuthResponseEnvelope | string): AuthResponseEnvelope | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      return asRecord(JSON.parse(trimmed));
+    } catch {
+      return null;
+    }
+  }
+
+  return asRecord(value);
+}
+
+function firstString(candidates: Array<Record<string, unknown>>, keys: string[]): string | undefined {
+  for (const candidate of candidates) {
+    for (const key of keys) {
+      const value = asNonEmptyString(candidate[key]);
+      if (value) {
+        return value;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function firstRecord(candidates: Array<Record<string, unknown>>, keys: string[]): Record<string, unknown> | undefined {
+  for (const candidate of candidates) {
+    for (const key of keys) {
+      const value = asRecord(candidate[key]);
+      if (value) {
+        return value;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function capitalize(value: string): string {
+  return value ? `${value[0].toUpperCase()}${value.slice(1)}` : value;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

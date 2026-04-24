@@ -24,31 +24,27 @@ export default function Login() {
 
     try {
       const response = await loginLearner({ email, password });
-      const learner = response.learner;
-      if (!learner?.id) {
-        throw new Error('Login succeeded but no user id was returned. Please try again.');
-      }
 
       setLearner({
         ...defaultLearner,
-        id: learner.id,
-        name: learner.name,
-        email: learner.email,
-        role: learner.role || 'student',
-        ...(learner.profile || {}),
+        id: response.userId,
+        name: response.name,
+        email: response.email,
+        role: response.role || 'student',
+        ...(response.profile || {}),
       });
 
-      if (learner.role === 'instructor') {
+      if (response.role === 'instructor') {
         navigate('/instructor');
         return;
       }
 
-      if (learner.role === 'admin') {
+      if (response.role === 'admin') {
         navigate('/admin');
         return;
       }
 
-      const hasOnboardingData = Boolean(learner.profile?.goal && learner.profile?.subject);
+      const hasOnboardingData = Boolean(response.profile?.goal && response.profile?.subject);
       navigate(hasOnboardingData ? '/dashboard' : '/onboarding');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to sign in.');

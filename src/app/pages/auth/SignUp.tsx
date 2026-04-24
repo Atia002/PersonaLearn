@@ -35,20 +35,16 @@ export default function SignUp() {
         profile: defaultLearner,
       });
 
-      const learner = response.learner;
-      if (!learner?.id) {
-        throw new Error('Signup succeeded but no user id was returned. Please try again.');
-      }
-
       setLearner({
         ...defaultLearner,
-        id: learner.id,
-        name: learner.name,
-        email: learner.email,
-        role: learner.role || (formData.role as 'student' | 'instructor' | 'admin'),
+        id: response.userId,
+        name: response.name,
+        email: response.email,
+        role: response.role || (formData.role as 'student' | 'instructor' | 'admin'),
+        ...(response.profile || {}),
       });
 
-      const role = learner.role || formData.role;
+      const role = response.role || formData.role;
       if (role === 'instructor') {
         navigate('/instructor');
       } else if (role === 'admin') {
