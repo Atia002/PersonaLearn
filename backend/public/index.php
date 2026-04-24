@@ -357,7 +357,11 @@ Response::error('Route not found.', 404, [
 
 function setCorsHeaders(): void
 {
-    $allowedOrigin = getenv('API_ALLOWED_ORIGIN') ?: 'http://localhost:5173';
+    $configuredOrigin = getenv('API_ALLOWED_ORIGIN') ?: 'http://localhost:5173';
+    $requestOrigin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+    $allowedOrigins = array_unique([$configuredOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173']);
+    $allowedOrigin = in_array($requestOrigin, $allowedOrigins, true) ? $requestOrigin : $configuredOrigin;
+
     header('Access-Control-Allow-Origin: ' . $allowedOrigin);
     header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
