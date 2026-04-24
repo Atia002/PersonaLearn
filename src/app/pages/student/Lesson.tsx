@@ -20,6 +20,7 @@ import {
   PlayCircle,
   Gamepad2,
   Volume2,
+  Loader2,
   Bot,
   User,
   ThumbsUp,

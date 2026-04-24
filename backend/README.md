@@ -17,8 +17,12 @@ Run the API
 
 Environment
 - Copy backend/.env.example to backend/.env if you want custom config.
-- Supported setting:
+- Supported settings:
   - API_ALLOWED_ORIGIN (default: http://localhost:5173)
+  - USE_GEMINI (default: false)
+  - GEMINI_API_KEY (required when USE_GEMINI=true)
+  - GEMINI_MODEL (default: gemini-1.5-flash)
+  - GEMINI_TIMEOUT_SECONDS (default: 12, min 3, max 30)
 
 Endpoints
 1. GET /api/health

@@ -52,7 +52,7 @@ export default function HobbiesStep({ data, updateData }: HobbiesStepProps) {
       <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-lg p-4 text-sm">
         <p className="text-gray-700">
           <strong>Why this matters:</strong> If you love gaming, we might explain loops using game mechanics. 
-          If you're into music, we could teach algorithms through playlist creation!
+          If you're into music, we could explain patterns through playlist creation!
         </p>
       </div>
 
