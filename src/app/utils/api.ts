@@ -7,6 +7,9 @@ type RequestOptions = RequestInit & {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
   const method = (options.method || 'GET').toUpperCase();
+  const normalizedBase = API_BASE_URL.replace(/\/+$/, '');
+  const normalizedPath = path.replace(/^\/+/, '');
+  const apiPath = normalizedPath.startsWith('api/') ? normalizedPath : `api/${normalizedPath}`;
 
   if (options.json !== undefined && method !== 'GET' && method !== 'HEAD') {
     headers.set('Content-Type', 'text/plain');
@@ -15,7 +18,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.delete('X-Requested-With');
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${normalizedBase}/${apiPath}`, {
     ...options,
     headers,
     body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
