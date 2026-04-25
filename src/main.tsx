@@ -4,6 +4,9 @@
   import "./styles/index.css";
 
 // Wake up Render free tier backend on app load
-fetch(import.meta.env.VITE_API_BASE_URL + '/api/health').catch(() => {});
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+if (API_BASE_URL) {
+  fetch(API_BASE_URL + '/api/health').catch(() => {});
+}
 
   
