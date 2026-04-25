@@ -97,14 +97,24 @@ if ($method === 'POST' && $path === '/api/learners/register') {
     $users[] = $record;
     $usersStore->putAll($users);
 
+    $createdUser = [
+        'id' => $id,
+        'name' => $name,
+        'email' => $email,
+        'role' => $role,
+        'profile' => $payload['profile'] ?? [],
+    ];
+
     Response::json([
         'ok' => true,
-        'learner' => [
-            'id' => $id,
-            'name' => $name,
-            'email' => $email,
-                'role' => $role,
-                'profile' => $payload['profile'] ?? [],
+        'id' => $id,
+        'userId' => $id,
+        'learnerId' => $id,
+        'user' => $createdUser,
+        'learner' => $createdUser,
+        'data' => [
+            'user' => $createdUser,
+            'learner' => $createdUser,
         ],
     ], 201);
     exit;
@@ -123,15 +133,25 @@ if ($method === 'POST' && $path === '/api/auth/login') {
 
         $hash = (string) ($user['passwordHash'] ?? '');
         if ($hash !== '' && password_verify($password, $hash)) {
+            $authUser = [
+                'id' => $user['id'] ?? '',
+                'name' => $user['name'] ?? '',
+                'email' => $user['email'] ?? '',
+                'role' => $user['role'] ?? 'student',
+                'profile' => $user['profile'] ?? [],
+            ];
+
             Response::json([
                 'ok' => true,
                 'token' => base64_encode((string) ($user['id'] ?? '')),
-                'learner' => [
-                    'id' => $user['id'] ?? '',
-                    'name' => $user['name'] ?? '',
-                    'email' => $user['email'] ?? '',
-                    'role' => $user['role'] ?? 'student',
-                    'profile' => $user['profile'] ?? [],
+                'id' => $authUser['id'],
+                'userId' => $authUser['id'],
+                'learnerId' => $authUser['id'],
+                'user' => $authUser,
+                'learner' => $authUser,
+                'data' => [
+                    'user' => $authUser,
+                    'learner' => $authUser,
                 ],
             ]);
             exit;

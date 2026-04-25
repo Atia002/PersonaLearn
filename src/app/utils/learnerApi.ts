@@ -12,6 +12,12 @@ export interface NormalizedAuthResponse {
 
 type AuthResponseEnvelope = Partial<Record<'ok' | 'token' | 'learner' | 'user' | 'data' | 'id' | 'userId', unknown>> & Record<string, unknown>;
 
+type AuthFallback = {
+  name?: string;
+  email?: string;
+  role?: 'student' | 'instructor' | 'admin';
+};
+
 export interface PlanResponse {
   ok: boolean;
   plan: Record<string, unknown>;
@@ -48,7 +54,11 @@ export async function registerLearner(payload: {
     json: payload,
   });
 
-  return normalizeAuthResponse(response, 'signup');
+  return normalizeAuthResponse(response, 'signup', {
+    name: payload.name,
+    email: payload.email,
+    role: payload.role,
+  });
 }
 
 export async function loginLearner(payload: { email: string; password: string }) {
@@ -57,7 +67,9 @@ export async function loginLearner(payload: { email: string; password: string })
     json: payload,
   });
 
-  return normalizeAuthResponse(response, 'login');
+  return normalizeAuthResponse(response, 'login', {
+    email: payload.email,
+  });
 }
 
 export async function updateLearnerProfile(
@@ -129,9 +141,14 @@ export async function askTutor(payload: {
   });
 }
 
-function normalizeAuthResponse(rawResponse: AuthResponseEnvelope | string, flow: 'signup' | 'login'): NormalizedAuthResponse {
+function normalizeAuthResponse(
+  rawResponse: AuthResponseEnvelope | string,
+  flow: 'signup' | 'login',
+  fallback: AuthFallback = {},
+): NormalizedAuthResponse {
   const response = normalizeEnvelope(rawResponse);
   if (!response) {
+    console.error('Unable to parse auth response.', rawResponse);
     throw new Error('Unexpected signup/login response format.');
   }
 
@@ -145,7 +162,7 @@ function normalizeAuthResponse(rawResponse: AuthResponseEnvelope | string, flow:
     response,
   ].filter((value): value is Record<string, unknown> => Boolean(value));
 
-  const id = firstString(candidates, ['id', 'userId']);
+  const id = firstString(candidates, ['id', 'userId', 'learnerId']);
   if (!id) {
     console.error('Auth response missing user id.', response);
     throw new Error(`${capitalize(flow)} succeeded but user id is missing in server response. Check console for response payload.`);
@@ -156,9 +173,9 @@ function normalizeAuthResponse(rawResponse: AuthResponseEnvelope | string, flow:
 
   return {
     userId: id,
-    name: firstString(candidates, ['name']) || '',
-    email: firstString(candidates, ['email']) || '',
-    role,
+    name: firstString(candidates, ['name']) || fallback.name || '',
+    email: firstString(candidates, ['email']) || fallback.email || '',
+    role: role || fallback.role,
     token: firstString([response, ...(data ? [data] : [])], ['token']),
     profile: firstRecord(candidates, ['profile']) as Partial<LearnerProfile> | undefined,
   };
@@ -171,14 +188,33 @@ function normalizeEnvelope(value: AuthResponseEnvelope | string): AuthResponseEn
       return null;
     }
 
-    try {
-      return asRecord(JSON.parse(trimmed));
-    } catch {
-      return null;
+    const parsed = parseJsonDeep(trimmed);
+    if (parsed) {
+      return parsed;
     }
+
+    const extractedObject = trimmed.match(/\{[\s\S]*\}/)?.[0];
+    if (extractedObject) {
+      return parseJsonDeep(extractedObject);
+    }
+
+    return null;
   }
 
   return asRecord(value);
+}
+
+function parseJsonDeep(value: string): AuthResponseEnvelope | null {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (typeof parsed === 'string') {
+      return parseJsonDeep(parsed);
+    }
+
+    return asRecord(parsed);
+  } catch {
+    return null;
+  }
 }
 
 function firstString(candidates: Array<Record<string, unknown>>, keys: string[]): string | undefined {

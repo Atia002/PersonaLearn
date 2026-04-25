@@ -44,14 +44,7 @@ export default function SignUp() {
         ...(response.profile || {}),
       });
 
-      const role = response.role || formData.role;
-      if (role === 'instructor') {
-        navigate('/instructor');
-      } else if (role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/onboarding');
-      }
+      navigate('/onboarding');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to create your account.');
     } finally {
