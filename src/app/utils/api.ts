@@ -12,10 +12,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const apiPath = normalizedPath.startsWith('api/') ? normalizedPath : `api/${normalizedPath}`;
 
   if (options.json !== undefined && method !== 'GET' && method !== 'HEAD') {
-    headers.set('Content-Type', 'text/plain');
-    // Keep requests CORS-simple for shared hosting by removing non-safelisted headers.
-    headers.delete('Authorization');
-    headers.delete('X-Requested-With');
+    headers.set('Content-Type', 'application/json');
+    headers.set('Accept', 'application/json');
   }
 
   const response = await fetch(`${normalizedBase}/${apiPath}`, {
@@ -24,19 +22,42 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
   });
 
-  const contentType = response.headers.get('content-type') || '';
-  const data = contentType.includes('application/json')
-    ? await response.json()
-    : await response.text();
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  const isJsonResponse = contentType.includes('application/json');
+  const hasBody = response.status !== 204 && response.status !== 205;
+
+  let data: unknown = null;
+  if (hasBody && isJsonResponse) {
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error('Backend returned invalid JSON response');
+    }
+  } else if (hasBody) {
+    const text = await response.text();
+    if (text.trim()) {
+      if (text.trimStart().startsWith('<')) {
+        throw new Error('Backend returned non-JSON response');
+      }
+
+      data = text;
+    }
+  }
 
   if (!response.ok) {
     const message = typeof data === 'object' && data && 'message' in data
       ? String((data as { message?: string }).message || 'Request failed')
-      : 'Request failed';
+      : typeof data === 'string' && data.trim()
+        ? data
+        : 'Request failed';
     throw new Error(message);
   }
 
-  return data as T;
+  if (!isJsonResponse && hasBody && typeof data === 'string' && data.trim()) {
+    throw new Error('Backend returned non-JSON response');
+  }
+
+  return (data ?? ({} as T)) as T;
 }
 
 export function getApiBaseUrl(): string {

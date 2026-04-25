@@ -1,14 +1,5 @@
 <?php
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 use PersonaLearn\Services\FreeContentService;
 use PersonaLearn\Services\MaterialService;
 use PersonaLearn\Services\PlanService;
@@ -35,7 +26,7 @@ setCorsHeaders();
 registerJsonErrorHandling();
 
 if (Request::method() === 'OPTIONS') {
-    http_response_code(204);
+    http_response_code(200);
     exit;
 }
 
@@ -405,18 +396,27 @@ function setCorsHeaders(): void
     $isVercelOrigin = preg_match('#^https://[a-z0-9-]+\.vercel\.app$#i', $requestOrigin) === 1;
 
     $allowAnyOrigin = in_array('*', $allowedOrigins, true);
+    $originHeaderValue = '*';
+
     if ($allowAnyOrigin) {
-        header('Access-Control-Allow-Origin: *');
+        $originHeaderValue = '*';
     } elseif ($requestOrigin !== '' && ($isLocalDevOrigin || $isVercelOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
-        header('Access-Control-Allow-Origin: ' . $requestOrigin);
-        header('Vary: Origin');
+        $originHeaderValue = $requestOrigin;
     } elseif ($allowedOrigins !== []) {
-        header('Access-Control-Allow-Origin: ' . $allowedOrigins[0]);
-        header('Vary: Origin');
+        $originHeaderValue = $allowedOrigins[0];
     }
 
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    if ($requestOrigin === '' && !$allowAnyOrigin) {
+        $originHeaderValue = $allowedOrigins[0] ?? '*';
+    }
+
+    header('Access-Control-Allow-Origin: ' . $originHeaderValue);
+    header('Vary: Origin');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+
+    $requestedHeaders = trim((string) ($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? ''));
+    $defaultAllowedHeaders = 'Content-Type, Authorization, X-Requested-With, Accept, Origin';
+    header('Access-Control-Allow-Headers: ' . ($requestedHeaders !== '' ? $requestedHeaders : $defaultAllowedHeaders));
     header('Access-Control-Max-Age: 86400');
 }
 
