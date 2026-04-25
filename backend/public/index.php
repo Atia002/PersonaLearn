@@ -26,7 +26,11 @@ setCorsHeaders();
 registerJsonErrorHandling();
 
 if (Request::method() === 'OPTIONS') {
+    // CORS headers already set by setCorsHeaders() above
+    // Return proper JSON response for preflight
     http_response_code(200);
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true]);
     exit;
 }
 
