@@ -1,38 +1,41 @@
 
-  # personaLearn-Web app
+  # PersonaLearn Web App
 
-  This is a code bundle for personaLearn-Web app. The original project is available at https://www.figma.com/design/bwIQwujlx8r97qhkNp5KS9/personaLearn-Web-app.
+  PersonaLearn is a Vite + React frontend with a lightweight PHP backend in `backend`.
 
-  ## Running the code
+  ## Local Run
 
-  Run `npm i` to install the dependencies.
+  1. Install frontend dependencies:
 
-  Run `npm run dev` to start the development server.
+    `pnpm install`
 
-  ## Backend API (PHP)
+  2. Start frontend:
 
-  A PHP backend is available in the `backend` folder.
+    `pnpm dev`
 
-  Run backend locally:
+  3. Start backend:
 
-  `php -S localhost:8000 -t backend/public`
+    `php -S localhost:8000 -t backend/public`
 
-  See `backend/README.md` for endpoint docs and request payloads.
+  4. Use local frontend env:
 
-## Deploying to Vercel or Netlify
+    `VITE_API_BASE_URL=http://localhost:8000`
 
-The frontend is ready for Vercel or Netlify as a static SPA. The PHP API must be hosted separately on a PHP-capable server, then pointed to from the frontend with `VITE_API_BASE_URL`.
+  ## Presentation-Ready Deployment (Recommended)
 
-Frontend deployment settings:
-- Build command: `pnpm build`
-- Publish directory: `dist`
-- SPA fallback: handled by [`vercel.json`](vercel.json) or [`netlify.toml`](netlify.toml)
+  Frontend: Vercel
+  Backend: Render (Docker)
 
-Environment variables:
-- `VITE_API_BASE_URL` should point to your deployed backend, for example `https://api.yourdomain.com`
-- Set `API_ALLOWED_ORIGIN` in the backend to your deployed frontend URL, for example `https://your-app.vercel.app` or `https://your-app.netlify.app`
+  1. Deploy backend from `backend` on Render.
+  2. Set backend env var `API_ALLOWED_ORIGIN` to your Vercel URL.
+  3. Deploy frontend on Vercel.
+  4. Set Vercel frontend env var:
 
-Local development:
-- Frontend: `VITE_API_BASE_URL=http://localhost:8000`
-- Backend: `php -S localhost:8000 -t backend/public`
+    `VITE_API_BASE_URL=https://your-render-service.onrender.com`
+
+  5. Redeploy frontend after setting env vars.
+
+  The frontend currently uses direct backend URL configuration via `VITE_API_BASE_URL` and no longer depends on an InfinityFree rewrite.
+
+  See [backend/README.md](backend/README.md) for backend endpoints and Render deployment notes.
   

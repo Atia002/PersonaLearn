@@ -10,10 +10,23 @@ Overview
 Requirements
 - PHP 8.0+
 
+Production Hosting
+- Recommended: Render Web Service (Docker) with persistent disk mounted at `/app/storage`.
+
 Run the API
 1. Open terminal in repository root.
 2. Start local PHP server:
    php -S localhost:8000 -t backend/public
+
+Deploy on Render
+1. Create a new Render Web Service from this repo.
+2. Set Root Directory to `backend`.
+3. Use Docker runtime (see `backend/Dockerfile`).
+4. Add a persistent disk mounted to `/app/storage`.
+5. Set env vars:
+  - `API_ALLOWED_ORIGIN=https://your-app.vercel.app`
+  - `USE_GEMINI` / `GEMINI_API_KEY` if needed.
+6. Verify `GET /api/health` returns JSON.
 
 Environment
 - Copy backend/.env.example to backend/.env if you want custom config.

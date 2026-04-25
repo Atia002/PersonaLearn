@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: personalearn-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: API_ALLOWED_ORIGIN
+        sync: false
+      - key: USE_GEMINI
+        value: "false"
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: GEMINI_TIMEOUT_SECONDS
+        value: "12"
+    disk:
+      name: personalearn-storage
+      mountPath: /app/storage
+      sizeGB: 1
