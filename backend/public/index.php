@@ -1,5 +1,17 @@
 <?php
 
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigin = getenv('API_ALLOWED_ORIGIN') ?: '*';
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 use PersonaLearn\Services\FreeContentService;
 use PersonaLearn\Services\MaterialService;
 use PersonaLearn\Services\PlanService;
@@ -22,17 +34,7 @@ require_once $rootDir . '/src/Services/PlanService.php';
 require_once $rootDir . '/src/Services/TutorService.php';
 
 loadEnvFile($rootDir . '/.env');
-setCorsHeaders();
 registerJsonErrorHandling();
-
-if (Request::method() === 'OPTIONS') {
-    // CORS headers already set by setCorsHeaders() above
-    // Return proper JSON response for preflight
-    http_response_code(200);
-    header('Content-Type: application/json');
-    echo json_encode(['ok' => true]);
-    exit;
-}
 
 $usersStore = new JsonStore($rootDir . '/storage/users.json');
 $plansStore = new JsonStore($rootDir . '/storage/plans.json');
