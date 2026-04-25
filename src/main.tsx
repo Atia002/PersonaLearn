@@ -9,4 +9,6 @@ if (API_BASE_URL) {
   fetch(API_BASE_URL + '/api/health').catch(() => {});
 }
 
+createRoot(document.getElementById("root")!).render(<App />);
+
   
