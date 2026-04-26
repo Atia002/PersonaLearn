@@ -49,8 +49,27 @@ final class TutorService
                 );
 
                 if ($geminiAnswer !== '') {
-                    $answer = $geminiAnswer;
-                    $aiUsed = true;
+                    $candidateAnswer = $this->sanitizeAiAnswer($geminiAnswer);
+                    if ($this->isUsableAiAnswer($candidateAnswer)) {
+                        $answer = $candidateAnswer;
+                        $aiUsed = true;
+                    } else {
+                        $retryPrompt = $prompt . "\n" . 'Rewrite the answer in 5-7 complete sentences with clear explanation and one example.';
+                        $retryAnswer = $this->callGemini(
+                            $this->geminiApiKey(),
+                            $retryPrompt,
+                            $this->geminiModel(),
+                            $this->geminiTimeoutSeconds()
+                        );
+
+                        if ($retryAnswer !== '') {
+                            $retryCandidate = $this->sanitizeAiAnswer($retryAnswer);
+                            if ($this->isUsableAiAnswer($retryCandidate)) {
+                                $answer = $retryCandidate;
+                                $aiUsed = true;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -86,8 +105,11 @@ final class TutorService
         $notesText = $uploadedNotesText !== '' ? "Uploaded notes:\n" . $uploadedNotesText : 'No uploaded notes available.';
 
         return implode("\n", [
-            'You are PersonaLearn tutor for a varsity showcase.',
-            'Keep the answer concise, specific, and educational.',
+            'You are a helpful tutor. Answer the student directly.',
+            'Do not use greetings, intro speeches, or words like showcase/presentation/demo.',
+            'Start with the concept explanation in sentence 1.',
+            'Use 4-8 concise sentences in plain language.',
+            'If the question is short (for example: "what" or "answer"), infer it from concept + subject and still provide a useful explanation.',
             'Do not claim to use uploaded notes unless they are included below.',
             'Subject: ' . $subject,
             'Concept: ' . $concept,
@@ -99,8 +121,39 @@ final class TutorService
             'Confidence: ' . $confidence,
             'Hobbies: ' . $hobbies,
             $notesText,
-            'If helpful, use a hobby analogy. If sourceMode includes uploaded notes, ground the answer in the note content.',
+            'If helpful, use one short hobby analogy.',
+            'If sourceMode includes uploaded notes, ground the answer in the note content.',
         ]);
+    }
+
+    private function sanitizeAiAnswer(string $answer): string
+    {
+        $clean = trim($answer);
+
+        // Remove common opener text that sounds like a presentation script.
+        $clean = preg_replace('/^(hey there!?\s*)/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\b(great question[^\.!?]*[\.!?])\s*/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\b(welcome to[^\.!?]*[\.!?])\s*/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\b(personalearn\s+showcase[^\.!?]*[\.!?])\s*/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\b(varsity\s+showcase[^\.!?]*[\.!?])\s*/i', '', $clean) ?? $clean;
+
+        $clean = trim($clean);
+        return $clean !== '' ? $clean : trim($answer);
+    }
+
+    private function isUsableAiAnswer(string $answer): bool
+    {
+        $trimmed = trim($answer);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        // Guard against empty or obviously clipped generations while allowing concise answers.
+        if (strlen($trimmed) < 25) {
+            return false;
+        }
+
+        return true;
     }
 
     private function callGemini(string $apiKey, string $prompt, string $model, int $timeoutSeconds): string
