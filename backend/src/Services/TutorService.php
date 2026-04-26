@@ -26,12 +26,17 @@ final class TutorService
             $profile = is_array($payload['learnerProfile'] ?? null) ? $payload['learnerProfile'] : [];
             $uploadedNotesText = trim((string) ($payload['uploadedNotesText'] ?? ''));
             $notesSource = null;
+            $notesRelevant = false;
 
             if ($uploadedNotesText === '' && $userId !== '' && in_array($sourceMode, ['uploaded', 'both'], true)) {
-                $material = $this->materialService->latestForUser($userId, $concept !== '' ? $concept : null);
+                $material = $this->materialService->latestForUser($userId);
                 if ($material !== null && ((bool) ($material['usableByTutor'] ?? true))) {
-                    $uploadedNotesText = (string) ($material['notesText'] ?? '');
-                    $notesSource = $material;
+                    $notesRelevant = $this->isMaterialRelevantToQuestion($subject, $concept, $question, $material);
+
+                    if ($notesRelevant) {
+                        $uploadedNotesText = (string) ($material['notesText'] ?? '');
+                        $notesSource = $material;
+                    }
                 }
             }
 
@@ -183,6 +188,98 @@ final class TutorService
         }
 
         return $requestedConcept;
+    }
+
+    private function isMaterialRelevantToQuestion(string $subject, string $concept, string $question, array $material): bool
+    {
+        $questionKey = strtolower(trim($question));
+        $subjectKey = strtolower(trim($subject));
+        $conceptKey = strtolower(trim($concept));
+        $materialConceptKey = strtolower(trim((string) ($material['concept'] ?? '')));
+        $materialTitleKey = strtolower(trim((string) ($material['title'] ?? '')));
+        $materialNotesKey = strtolower(trim((string) ($material['notesText'] ?? '')));
+
+        if ($questionKey === '') {
+            return false;
+        }
+
+        $terms = array_values(array_filter(array_unique(array_merge(
+            $this->questionKeywords($subjectKey, $questionKey),
+            $conceptKey !== '' ? [$conceptKey] : []
+        ))));
+
+        foreach ($terms as $term) {
+            if ($term === '') {
+                continue;
+            }
+
+            if (str_contains($materialConceptKey, $term) || str_contains($materialTitleKey, $term) || str_contains($materialNotesKey, $term)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function questionKeywords(string $subjectKey, string $questionKey): array
+    {
+        $keywords = [];
+
+        if ($subjectKey === 'science') {
+            if (preg_match('/\b(motion|force|forces|speed|velocity|acceleration|gravity|inertia|mass|weight|newton|newtons?)\b/u', $questionKey)) {
+                $keywords[] = 'forces and motion';
+            }
+
+            if (preg_match('/\b(energy|matter|atom|atoms|energy transfer)\b/u', $questionKey)) {
+                $keywords[] = 'matter and energy';
+            }
+
+            if (preg_match('/\b(cell|biology|organism|dna|stem|organ)\b/u', $questionKey)) {
+                $keywords[] = 'basic biology';
+            }
+
+            if (preg_match('/\b(scientific method|hypothesis|experiment|observation)\b/u', $questionKey)) {
+                $keywords[] = 'scientific method';
+            }
+        }
+
+        if ($subjectKey === 'writing') {
+            if (preg_match('/\b(thesis|argument|claim)\b/u', $questionKey)) {
+                $keywords[] = 'thesis statement';
+            }
+
+            if (preg_match('/\b(paragraph|topic sentence|structure)\b/u', $questionKey)) {
+                $keywords[] = 'paragraph structure';
+            }
+
+            if (preg_match('/\b(grammar|clarity|sentence)\b/u', $questionKey)) {
+                $keywords[] = 'grammar clarity';
+            }
+
+            if (preg_match('/\b(cite|citation|reference|referencing)\b/u', $questionKey)) {
+                $keywords[] = 'referencing';
+            }
+        }
+
+        if ($subjectKey === 'programming') {
+            if (preg_match('/\b(variable|variables)\b/u', $questionKey)) {
+                $keywords[] = 'variables';
+            }
+
+            if (preg_match('/\b(loop|loops|iterate)\b/u', $questionKey)) {
+                $keywords[] = 'loops';
+            }
+
+            if (preg_match('/\b(if|condition|conditional)\b/u', $questionKey)) {
+                $keywords[] = 'conditionals';
+            }
+
+            if (preg_match('/\b(function|parameter|return)\b/u', $questionKey)) {
+                $keywords[] = 'functions';
+            }
+        }
+
+        return $keywords;
     }
 
     private function buildPrompt(string $subject, string $concept, string $question, string $actionType, array $profile, string $uploadedNotesText, string $sourceMode): string
