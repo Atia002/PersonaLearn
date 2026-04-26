@@ -21,6 +21,10 @@ export interface LearnerProfile {
   diagnosticScore?: number;
   diagnosticWeakConcept?: string;
   diagnosticConfidence?: 'high' | 'medium' | 'low' | '';
+  quizScore?: number;
+  lastQuizConcept?: string;
+  quizWeakConcept?: string;
+  quizCompletedAt?: string;
   completedLessons: string[];
   masteryScores: { [key: string]: number };
   studyStreak: number;

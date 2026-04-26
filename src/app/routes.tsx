@@ -77,6 +77,10 @@ export const router = createBrowserRouter([
     Component: MyMaterials,
   },
   {
+    path: "/quiz",
+    Component: Quiz,
+  },
+  {
     path: "/quiz/:id",
     Component: Quiz,
   },

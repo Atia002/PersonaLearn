@@ -132,6 +132,14 @@ export const subjectData: Record<string, SubjectData> = {
         explanation: 'Functions group reusable instructions so you can use them again without rewriting code.',
         concept: 'Functions'
       },
+      {
+        id: 'prog-q5',
+        question: 'Which statement best describes a conditional?',
+        options: ['It stores values permanently', 'It decides what code runs based on a condition', 'It repeats code forever', 'It creates database tables'],
+        correctAnswer: 1,
+        explanation: 'Conditionals evaluate true/false logic and choose which code branch should run.',
+        concept: 'Conditionals'
+      },
     ],
     hobbyExamples: [
       {
@@ -253,6 +261,19 @@ export const subjectData: Record<string, SubjectData> = {
         explanation: 'You must cite sources for both direct quotes and paraphrased ideas to avoid plagiarism.',
         concept: 'Referencing'
       },
+      {
+        id: 'writ-q5',
+        question: 'Which thesis statement is strongest?',
+        options: [
+          'Technology is interesting.',
+          'Schools should limit phone use in class because it improves attention and learning outcomes.',
+          'Many people use phones.',
+          'This essay is about education.'
+        ],
+        correctAnswer: 1,
+        explanation: 'A strong thesis is arguable, specific, and gives clear direction for supporting points.',
+        concept: 'Thesis Statement'
+      },
     ],
     hobbyExamples: [
       {
@@ -360,6 +381,19 @@ export const subjectData: Record<string, SubjectData> = {
         correctAnswer: 2,
         explanation: 'The cell is the basic structural and functional unit of all living organisms.',
         concept: 'Basic Biology'
+      },
+      {
+        id: 'sci-q5',
+        question: 'What does Newton\'s third law state?',
+        options: [
+          'Force equals mass times acceleration',
+          'Objects in motion stay in motion unless acted on',
+          'For every action, there is an equal and opposite reaction',
+          'Energy can be created from nothing'
+        ],
+        correctAnswer: 2,
+        explanation: 'Newton\'s third law explains that forces come in pairs: equal in size and opposite in direction.',
+        concept: 'Forces and Motion'
       },
     ],
     hobbyExamples: [

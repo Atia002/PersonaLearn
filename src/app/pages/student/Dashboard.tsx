@@ -71,7 +71,7 @@ export default function Dashboard() {
     { icon: <Calendar className="w-5 h-5" />, label: 'Weekly Planner', path: '/planner' },
     { icon: <MessageSquare className="w-5 h-5" />, label: 'AI Tutor', path: '/lesson/1' },
     { icon: <Upload className="w-5 h-5" />, label: 'My Materials', path: '/materials' },
-    { icon: <FileText className="w-5 h-5" />, label: 'Assessments', path: '/quiz/1' },
+    { icon: <FileText className="w-5 h-5" />, label: 'Assessments', path: '/quiz' },
     { icon: <BarChart3 className="w-5 h-5" />, label: 'Progress', path: '/progress' },
     { icon: <Target className="w-5 h-5" />, label: 'Profile', path: '/profile' },
     { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/settings' },
