@@ -110,7 +110,19 @@ final class TutorService
         }
 
         if ($subjectKey === 'science') {
-            if (str_contains($questionKey, 'motion') || str_contains($questionKey, 'force') || str_contains($questionKey, 'speed') || str_contains($questionKey, 'acceleration')) {
+            if (
+                str_contains($questionKey, 'motion') ||
+                str_contains($questionKey, 'force') ||
+                str_contains($questionKey, 'speed') ||
+                str_contains($questionKey, 'acceleration') ||
+                str_contains($questionKey, 'newton') ||
+                str_contains($questionKey, 'gravity') ||
+                str_contains($questionKey, 'inertia') ||
+                str_contains($questionKey, 'action') ||
+                str_contains($questionKey, 'reaction') ||
+                str_contains($questionKey, 'weight') ||
+                str_contains($questionKey, 'mass')
+            ) {
                 return 'Forces and Motion';
             }
 
@@ -118,7 +130,14 @@ final class TutorService
                 return 'Matter and Energy';
             }
 
-            if (str_contains($questionKey, 'cell') || str_contains($questionKey, 'biology') || str_contains($questionKey, 'organism')) {
+            if (
+                str_contains($questionKey, 'cell') ||
+                str_contains($questionKey, 'biology') ||
+                str_contains($questionKey, 'organism') ||
+                str_contains($questionKey, 'stem') ||
+                str_contains($questionKey, 'dna') ||
+                str_contains($questionKey, 'organ')
+            ) {
                 return 'Basic Biology';
             }
 
