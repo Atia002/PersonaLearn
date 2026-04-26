@@ -34,14 +34,118 @@ import { useLearner } from '../../contexts/LearnerContext';
 import { getSubjectData } from '../../data/subjectData';
 import { askTutor } from '../../utils/learnerApi';
 
+function normalizeSubjectId(rawSubject?: string): 'programming' | 'writing' | 'science' {
+  const normalized = (rawSubject || '').trim().toLowerCase();
+
+  if (normalized === 'writing' || normalized === 'academic writing' || normalized === 'academic-writing') {
+    return 'writing';
+  }
+
+  if (normalized === 'science') {
+    return 'science';
+  }
+
+  return 'programming';
+}
+
 export default function Lesson() {
   const navigate = useNavigate();
   const { learner, updateLearner } = useLearner();
-  const subject = getSubjectData(learner?.subject || 'programming');
+  const subjectId = normalizeSubjectId(learner?.subject);
+  const subject = getSubjectData(subjectId);
   const currentConcept = learner?.diagnosticWeakConcept || subject?.concepts.find((concept) => concept.status !== 'mastered')?.name || subject?.concepts[0]?.name || 'Variables';
   const lessonTitle = subject?.lessons[0]?.title || 'Your Lesson';
   const lessonDescription = subject?.lessons[0]?.description || 'This lesson is personalized to your selected subject and learning goals.';
   const hobbyExample = subject?.hobbyExamples[0];
+  const lessonContentBySubject: Record<'programming' | 'writing' | 'science', {
+    keyConcepts: Array<{ title: string; detail: string; color: string }>;
+    syntaxTitle: string;
+    syntaxSnippet: string;
+    practicePrompt: string;
+    practiceCta: string;
+    examples: Array<{ hobby: string; concept: string; example: string; code: string }>;
+    practiceComingSoon: string;
+  }> = {
+    programming: {
+      keyConcepts: [
+        { title: 'Reusability', detail: 'Write code once, use it many times', color: 'blue' },
+        { title: 'Parameters', detail: 'Pass data into functions to customize behavior', color: 'teal' },
+        { title: 'Return Values', detail: 'Get results back from your functions', color: 'purple' },
+      ],
+      syntaxTitle: 'Function Syntax',
+      syntaxSnippet: `// Define a function\nfunction greetPlayer(name) {\n  return "Welcome, " + name + "!";\n}\n\n// Use the function\nlet message = greetPlayer("Hero");\nconsole.log(message); // Output: "Welcome, Hero!"\n\n// Gaming example: Calculate damage\nfunction calculateDamage(baseDamage, criticalHit) {\n  if (criticalHit) {\n    return baseDamage * 2; // Double damage!\n  }\n  return baseDamage;\n}\n\nlet damage = calculateDamage(50, true);\nconsole.log(damage); // Output: 100`,
+      practicePrompt: 'Create a function called powerUp that increases a player\'s strength by 10 points.',
+      practiceCta: 'Start Practice Exercise',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Function Parameters',
+          example: 'Just like a character\'s attack can have different power levels, function parameters let you customize behavior.',
+          code: `function playerAttack(enemy, attackPower) {\n  enemy.health -= attackPower;\n  console.log(\`${'${enemy.name}'} took ${'${attackPower}'} damage!\`);\n}\n\nlet boss = { name: "Dragon", health: 500 };\nplayerAttack(boss, 75);`,
+        },
+        {
+          hobby: 'music',
+          concept: 'Return Values',
+          example: 'Think of a music equalizer that takes a volume level and returns the adjusted sound.',
+          code: `function adjustVolume(currentVolume, adjustment) {\n  let newVolume = currentVolume + adjustment;\n  if (newVolume > 100) return 100;\n  if (newVolume < 0) return 0;\n  return newVolume;\n}\n\nconsole.log(adjustVolume(50, 25)); // 75`,
+        },
+      ],
+      practiceComingSoon: 'Interactive coding challenges coming soon!',
+    },
+    writing: {
+      keyConcepts: [
+        { title: 'Clear Claim', detail: 'A thesis states your main argument clearly', color: 'blue' },
+        { title: 'Focused Evidence', detail: 'Each paragraph supports one main point', color: 'teal' },
+        { title: 'Strong Structure', detail: 'Organize ideas logically from intro to conclusion', color: 'purple' },
+      ],
+      syntaxTitle: 'Thesis and Paragraph Model',
+      syntaxSnippet: `Thesis statement:\n"School libraries should stay open after class because they improve study access, reduce distraction, and support exam performance."\n\nBody paragraph structure:\n1) Topic sentence (point)\n2) Evidence (fact/example)\n3) Explanation (why it supports thesis)\n4) Link sentence (connect back to argument)\n\nQuick template:\nPoint -> Evidence -> Explanation -> Link`,
+      practicePrompt: 'Write one thesis statement on a topic you care about, then draft a 4-sentence supporting paragraph.',
+      practiceCta: 'Start Writing Practice',
+      examples: [
+        {
+          hobby: 'music',
+          concept: 'Paragraph Structure',
+          example: 'Like a song, a paragraph needs a clear opening line, supporting lines, and a strong close.',
+          code: `Topic sentence: Social media affects student focus in class.\nEvidence: A 2024 school survey found frequent phone use lowered quiz scores.\nExplanation: This suggests attention drops when notifications interrupt learning.\nLink: Therefore, phone limits can improve classroom concentration.`,
+        },
+        {
+          hobby: 'gaming',
+          concept: 'Thesis Statement',
+          example: 'A thesis is like your game objective: one clear mission that guides every move.',
+          code: `Weak thesis: Gaming is popular.\nStrong thesis: Story-based games can improve reading comprehension because players analyze dialogue, infer meaning, and track complex plots.`,
+        },
+      ],
+      practiceComingSoon: 'Interactive writing drills coming soon!',
+    },
+    science: {
+      keyConcepts: [
+        { title: 'Cause and Effect', detail: 'Forces cause changes in motion', color: 'blue' },
+        { title: 'Evidence First', detail: 'Use observations and data to justify claims', color: 'teal' },
+        { title: 'Model Thinking', detail: 'Use simple models to explain real-world behavior', color: 'purple' },
+      ],
+      syntaxTitle: 'Scientific Explanation Pattern',
+      syntaxSnippet: `Question: Why does a ball speed up when kicked harder?\n\nClaim: A stronger force increases acceleration.\nEvidence: In repeated trials, larger kick force produced higher speed.\nReasoning: By Newton\'s second law, more net force causes greater acceleration.\n\nFormula reminder: F = m * a`,
+      practicePrompt: 'Choose one everyday motion example and explain it using claim, evidence, and reasoning.',
+      practiceCta: 'Start Science Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Forces and Motion',
+          example: 'In racing games, a boost applies extra force so your car accelerates faster.',
+          code: `Observation: Boost activated -> speed rises quickly.\nConcept: Extra force changes velocity.\nConclusion: Greater applied force means greater acceleration (if mass is constant).`,
+        },
+        {
+          hobby: 'sports',
+          concept: 'Scientific Method',
+          example: 'You can test which running shoe gives better sprint time by controlling distance and surface.',
+          code: `Question: Which shoe improves sprint speed?\nHypothesis: Shoe A reduces sprint time.\nTest: Run 5 timed trials per shoe on same track.\nResult: Compare average times.`,
+        },
+      ],
+      practiceComingSoon: 'Interactive science investigations coming soon!',
+    },
+  };
+  const activeLessonContent = lessonContentBySubject[subjectId];
   const [message, setMessage] = useState('');
   const [sourceMode, setSourceMode] = useState<'official' | 'uploaded' | 'both'>('both');
   const [sending, setSending] = useState(false);
@@ -75,7 +179,7 @@ export default function Lesson() {
     try {
       const response = await askTutor({
         userId: learner?.id || '',
-        subject: learner?.subject || 'programming',
+        subject: subjectId,
         concept: currentConcept,
         question: questionText,
         sourceMode,
@@ -240,33 +344,38 @@ export default function Lesson() {
                   <div className="space-y-4">
                     <h3 className="text-xl font-bold text-gray-900">Key Concepts</h3>
                     <div className="grid gap-4">
-                      <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                        <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900 mb-1">Reusability</p>
-                          <p className="text-sm text-gray-700">Write code once, use it many times</p>
+                      {activeLessonContent.keyConcepts.map((concept) => (
+                        <div
+                          key={concept.title}
+                          className={`flex items-start gap-3 p-4 rounded-xl border ${
+                            concept.color === 'teal'
+                              ? 'bg-teal-50 border-teal-200'
+                              : concept.color === 'purple'
+                              ? 'bg-purple-50 border-purple-200'
+                              : 'bg-blue-50 border-blue-200'
+                          }`}
+                        >
+                          <CheckCircle
+                            className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                              concept.color === 'teal'
+                                ? 'text-teal-600'
+                                : concept.color === 'purple'
+                                ? 'text-purple-600'
+                                : 'text-blue-600'
+                            }`}
+                          />
+                          <div>
+                            <p className="font-semibold text-gray-900 mb-1">{concept.title}</p>
+                            <p className="text-sm text-gray-700">{concept.detail}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3 p-4 bg-teal-50 rounded-xl border border-teal-200">
-                        <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900 mb-1">Parameters</p>
-                          <p className="text-sm text-gray-700">Pass data into functions to customize behavior</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
-                        <CheckCircle className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-gray-900 mb-1">Return Values</p>
-                          <p className="text-sm text-gray-700">Get results back from your functions</p>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Code Example */}
                   <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-gray-900">Function Syntax</h3>
+                    <h3 className="text-xl font-bold text-gray-900">{activeLessonContent.syntaxTitle}</h3>
                     <div className="relative group">
                       <Button 
                         size="sm" 
@@ -276,26 +385,8 @@ export default function Lesson() {
                         <Copy className="w-4 h-4 mr-2" />
                         Copy
                       </Button>
-                      <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto shadow-lg">
-                        <code className="text-sm">{`// Define a function
-function greetPlayer(name) {
-  return "Welcome, " + name + "!";
-}
-
-// Use the function
-let message = greetPlayer("Hero");
-console.log(message); // Output: "Welcome, Hero!"
-
-// Gaming example: Calculate damage
-function calculateDamage(baseDamage, criticalHit) {
-  if (criticalHit) {
-    return baseDamage * 2; // Double damage!
-  }
-  return baseDamage;
-}
-
-let damage = calculateDamage(50, true);
-console.log(damage); // Output: 100`}</code>
+                      <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto shadow-lg whitespace-pre-wrap">
+                        <code className="text-sm">{activeLessonContent.syntaxSnippet}</code>
                       </pre>
                       <Button 
                         size="sm" 
@@ -314,11 +405,10 @@ console.log(damage); // Output: 100`}</code>
                       <h4 className="text-lg font-bold text-gray-900">Try It Yourself</h4>
                     </div>
                     <p className="text-gray-700 mb-4">
-                      Create a function called <code className="px-2 py-1 bg-teal-100 rounded">powerUp</code> that increases 
-                      a player's strength by 10 points.
+                      {activeLessonContent.practicePrompt}
                     </p>
                     <Button className="bg-teal-600 hover:bg-teal-700">
-                      Start Practice Exercise
+                      {activeLessonContent.practiceCta}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -332,34 +422,15 @@ console.log(damage); // Output: 100`}</code>
                     <p className="text-gray-600">These examples use gaming and music - your favorite hobbies!</p>
                   </div>
                   
-                  <HobbyExampleCard
-                    hobby="gaming"
-                    concept="Function Parameters"
-                    example="Just like a character's attack can have different power levels, function parameters let you customize behavior. The 'attackPower' parameter determines how much damage is dealt."
-                    code={`function playerAttack(enemy, attackPower) {
-  enemy.health -= attackPower;
-  console.log(\`\${enemy.name} took \${attackPower} damage!\`);
-}
-
-let boss = { name: "Dragon", health: 500 };
-playerAttack(boss, 75);`}
-                  />
-
-                  <HobbyExampleCard
-                    hobby="music"
-                    concept="Return Values"
-                    example="Think of a music equalizer that takes a volume level and returns the adjusted sound. Functions can process input and return results, just like audio processing!"
-                    code={`function adjustVolume(currentVolume, adjustment) {
-  let newVolume = currentVolume + adjustment;
-  // Keep volume between 0 and 100
-  if (newVolume > 100) return 100;
-  if (newVolume < 0) return 0;
-  return newVolume;
-}
-
-let volume = adjustVolume(50, 25);
-console.log(volume); // Output: 75`}
-                  />
+                  {activeLessonContent.examples.map((example) => (
+                    <HobbyExampleCard
+                      key={`${example.hobby}-${example.concept}`}
+                      hobby={example.hobby}
+                      concept={example.concept}
+                      example={example.example}
+                      code={example.code}
+                    />
+                  ))}
                 </div>
               </TabsContent>
 
@@ -367,8 +438,8 @@ console.log(volume); // Output: 75`}
                 <div className="text-center py-12">
                   <Code2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">Practice Exercises</h3>
-                  <p className="text-gray-600 mb-6">Interactive coding challenges coming soon!</p>
-                  <Button>Start Coding Challenge</Button>
+                  <p className="text-gray-600 mb-6">{activeLessonContent.practiceComingSoon}</p>
+                  <Button>{activeLessonContent.practiceCta}</Button>
                 </div>
               </TabsContent>
 

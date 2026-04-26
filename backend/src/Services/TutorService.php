@@ -153,6 +153,15 @@ final class TutorService
             return false;
         }
 
+        // Reject answers that look cut off mid-sentence.
+        if (preg_match('/[\-\x{2014}]$/u', $trimmed) === 1) {
+            return false;
+        }
+
+        if (preg_match('/[\.!?]$/', $trimmed) !== 1 && strlen($trimmed) < 120) {
+            return false;
+        }
+
         return true;
     }
 
@@ -167,7 +176,7 @@ final class TutorService
             ]],
             'generationConfig' => [
                 'temperature' => 0.4,
-                'maxOutputTokens' => 320,
+                'maxOutputTokens' => 480,
             ],
         ]);
 
