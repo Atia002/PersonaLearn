@@ -4,9 +4,11 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Progress } from '../../components/ui/progress';
 import { CheckCircle, Circle, Lock, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 export default function LearningPath() {
-  const { learner } = useLearner();
+  const navigate = useNavigate();
+  const { learner, updateLearner } = useLearner();
   const subject = getSubjectData(learner?.subject || 'programming');
 
   const modules = (subject?.concepts || []).map((concept, index) => ({
@@ -22,6 +24,13 @@ export default function LearningPath() {
     if (status === 'in-progress') return <Circle className="w-6 h-6 text-blue-500" />;
     if (status === 'locked') return <Lock className="w-6 h-6 text-gray-400" />;
     return <Circle className="w-6 h-6 text-gray-300" />;
+  };
+
+  const openModuleLesson = (moduleName: string) => {
+    updateLearner({
+      diagnosticWeakConcept: moduleName,
+    });
+    navigate('/lesson/1');
   };
 
   return (
@@ -60,7 +69,7 @@ export default function LearningPath() {
                     </div>
 
                     {module.status !== 'locked' && (
-                      <Button>
+                      <Button onClick={() => openModuleLesson(module.name)}>
                         {module.status === 'completed' ? 'Review' : module.status === 'in-progress' ? 'Continue' : 'Start'}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
