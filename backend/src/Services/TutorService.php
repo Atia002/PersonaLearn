@@ -15,8 +15,12 @@ final class TutorService
         try {
             $userId = trim((string) ($payload['userId'] ?? ''));
             $subject = trim((string) ($payload['subject'] ?? 'programming'));
-            $concept = trim((string) ($payload['concept'] ?? ''));
             $question = trim((string) ($payload['question'] ?? ''));
+            $concept = $this->resolveConceptForQuestion(
+                $subject,
+                trim((string) ($payload['concept'] ?? '')),
+                $question
+            );
             $actionType = $this->normalizeChoice((string) ($payload['actionType'] ?? 'normal'), ['normal', 'explain_simpler', 'another_example', 'use_hobby', 'uploaded_only'], 'normal');
             $sourceMode = $this->normalizeChoice((string) ($payload['sourceMode'] ?? 'both'), ['official', 'uploaded', 'both'], 'both');
             $profile = is_array($payload['learnerProfile'] ?? null) ? $payload['learnerProfile'] : [];
@@ -94,6 +98,72 @@ final class TutorService
                 'notesSource' => null,
             ];
         }
+    }
+
+    private function resolveConceptForQuestion(string $subject, string $requestedConcept, string $question): string
+    {
+        $questionKey = strtolower(trim($question));
+        $subjectKey = strtolower(trim($subject));
+
+        if ($questionKey === '') {
+            return $requestedConcept;
+        }
+
+        if ($subjectKey === 'science') {
+            if (str_contains($questionKey, 'motion') || str_contains($questionKey, 'force') || str_contains($questionKey, 'speed') || str_contains($questionKey, 'acceleration')) {
+                return 'Forces and Motion';
+            }
+
+            if (str_contains($questionKey, 'energy') || str_contains($questionKey, 'matter')) {
+                return 'Matter and Energy';
+            }
+
+            if (str_contains($questionKey, 'cell') || str_contains($questionKey, 'biology') || str_contains($questionKey, 'organism')) {
+                return 'Basic Biology';
+            }
+
+            if (str_contains($questionKey, 'hypothesis') || str_contains($questionKey, 'experiment') || str_contains($questionKey, 'scientific method')) {
+                return 'Scientific Method';
+            }
+        }
+
+        if ($subjectKey === 'writing' || $subjectKey === 'academic writing') {
+            if (str_contains($questionKey, 'thesis')) {
+                return 'Thesis Statement';
+            }
+
+            if (str_contains($questionKey, 'paragraph') || str_contains($questionKey, 'topic sentence')) {
+                return 'Paragraph Structure';
+            }
+
+            if (str_contains($questionKey, 'grammar') || str_contains($questionKey, 'clarity') || str_contains($questionKey, 'sentence')) {
+                return 'Grammar Clarity';
+            }
+
+            if (str_contains($questionKey, 'cite') || str_contains($questionKey, 'reference') || str_contains($questionKey, 'citation')) {
+                return 'Referencing';
+            }
+        }
+
+        if ($subjectKey === 'programming') {
+            if (str_contains($questionKey, 'variable')) {
+                return 'Variables';
+            }
+
+            if (str_contains($questionKey, 'loop') || str_contains($questionKey, 'iterate')) {
+                return 'Loops';
+            }
+
+            if (str_contains($questionKey, 'if ') || str_contains($questionKey, 'condition')) {
+                return 'Conditionals';
+            }
+
+            if (str_contains($questionKey, 'function') || str_contains($questionKey, 'parameter') || str_contains($questionKey, 'return')) {
+                return 'Functions';
+            }
+        }
+
+        return $requestedConcept;
     }
 
     private function buildPrompt(string $subject, string $concept, string $question, string $actionType, array $profile, string $uploadedNotesText, string $sourceMode): string
