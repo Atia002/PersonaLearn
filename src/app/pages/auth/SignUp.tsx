@@ -23,6 +23,12 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -32,17 +38,32 @@ export default function SignUp() {
         email: formData.email,
         password: formData.password,
         role: formData.role as 'student' | 'instructor' | 'admin',
-        profile: defaultLearner,
+        profile: {
+          ...defaultLearner,
+          role: formData.role as 'student' | 'instructor' | 'admin',
+        },
       });
+
+      const role = response.role || (formData.role as 'student' | 'instructor' | 'admin');
 
       setLearner({
         ...defaultLearner,
+        ...(response.profile || {}),
         id: response.userId,
         name: response.name,
         email: response.email,
-        role: response.role || (formData.role as 'student' | 'instructor' | 'admin'),
-        ...(response.profile || {}),
+        role,
       });
+
+      if (role === 'instructor') {
+        navigate('/instructor');
+        return;
+      }
+
+      if (role === 'admin') {
+        navigate('/admin');
+        return;
+      }
 
       navigate('/onboarding');
     } catch (error) {

@@ -24,22 +24,23 @@ export default function Login() {
 
     try {
       const response = await loginLearner({ email, password });
+      const role = response.role || 'student';
 
       setLearner({
         ...defaultLearner,
+        ...(response.profile || {}),
         id: response.userId,
         name: response.name,
         email: response.email,
-        role: response.role || 'student',
-        ...(response.profile || {}),
+        role,
       });
 
-      if (response.role === 'instructor') {
+      if (role === 'instructor') {
         navigate('/instructor');
         return;
       }
 
-      if (response.role === 'admin') {
+      if (role === 'admin') {
         navigate('/admin');
         return;
       }

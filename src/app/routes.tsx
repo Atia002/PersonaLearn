@@ -1,4 +1,5 @@
-import { createBrowserRouter } from "react-router";
+import type { ReactNode } from "react";
+import { Navigate, createBrowserRouter } from "react-router";
 import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
@@ -17,6 +18,134 @@ import Profile from "./pages/student/Profile";
 import Settings from "./pages/student/Settings";
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import { useLearner } from "./contexts/LearnerContext";
+
+function RequireRole({ allowedRoles, children }: { allowedRoles: Array<'student' | 'instructor' | 'admin'>; children: ReactNode }) {
+  const { learner, isAuthenticated } = useLearner();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const role = learner?.role || 'student';
+  if (allowedRoles.includes(role as 'student' | 'instructor' | 'admin')) {
+    return <>{children}</>;
+  }
+
+  if (role === 'instructor') {
+    return <Navigate to="/instructor" replace />;
+  }
+
+  if (role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
+}
+
+function StudentOnboardingRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Onboarding />
+    </RequireRole>
+  );
+}
+
+function StudentDiagnosticRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Diagnostic />
+    </RequireRole>
+  );
+}
+
+function StudentPlanRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <PersonalizedPlan />
+    </RequireRole>
+  );
+}
+
+function StudentDashboardRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Dashboard />
+    </RequireRole>
+  );
+}
+
+function StudentLessonRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Lesson />
+    </RequireRole>
+  );
+}
+
+function StudentMaterialsRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <MyMaterials />
+    </RequireRole>
+  );
+}
+
+function StudentQuizRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Quiz />
+    </RequireRole>
+  );
+}
+
+function StudentPlannerRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <WeeklyPlanner />
+    </RequireRole>
+  );
+}
+
+function StudentProgressRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Progress />
+    </RequireRole>
+  );
+}
+
+function StudentProfileRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Profile />
+    </RequireRole>
+  );
+}
+
+function StudentSettingsRoute() {
+  return (
+    <RequireRole allowedRoles={['student']}>
+      <Settings />
+    </RequireRole>
+  );
+}
+
+function InstructorRoute() {
+  return (
+    <RequireRole allowedRoles={['instructor']}>
+      <InstructorDashboard />
+    </RequireRole>
+  );
+}
+
+function AdminRoute() {
+  return (
+    <RequireRole allowedRoles={['admin']}>
+      <AdminDashboard />
+    </RequireRole>
+  );
+}
 
 // 404 Not Found component
 function NotFound() {
@@ -50,19 +179,19 @@ export const router = createBrowserRouter([
   },
   {
     path: "/onboarding",
-    Component: Onboarding,
+    Component: StudentOnboardingRoute,
   },
   {
     path: "/diagnostic",
-    Component: Diagnostic,
+    Component: StudentDiagnosticRoute,
   },
   {
     path: "/personalized-plan",
-    Component: PersonalizedPlan,
+    Component: StudentPlanRoute,
   },
   {
     path: "/dashboard",
-    Component: Dashboard,
+    Component: StudentDashboardRoute,
   },
   {
     path: "/learning-path",
@@ -70,43 +199,43 @@ export const router = createBrowserRouter([
   },
   {
     path: "/lesson/:id",
-    Component: Lesson,
+    Component: StudentLessonRoute,
   },
   {
     path: "/materials",
-    Component: MyMaterials,
+    Component: StudentMaterialsRoute,
   },
   {
     path: "/quiz",
-    Component: Quiz,
+    Component: StudentQuizRoute,
   },
   {
     path: "/quiz/:id",
-    Component: Quiz,
+    Component: StudentQuizRoute,
   },
   {
     path: "/planner",
-    Component: WeeklyPlanner,
+    Component: StudentPlannerRoute,
   },
   {
     path: "/progress",
-    Component: Progress,
+    Component: StudentProgressRoute,
   },
   {
     path: "/profile",
-    Component: Profile,
+    Component: StudentProfileRoute,
   },
   {
     path: "/settings",
-    Component: Settings,
+    Component: StudentSettingsRoute,
   },
   {
     path: "/instructor",
-    Component: InstructorDashboard,
+    Component: InstructorRoute,
   },
   {
     path: "/admin",
-    Component: AdminDashboard,
+    Component: AdminRoute,
   },
   {
     path: "*",
