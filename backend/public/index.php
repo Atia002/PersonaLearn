@@ -25,6 +25,8 @@ ini_set('display_errors', '0');
 
 $rootDir = detectRootDir(__DIR__);
 
+loadEnvFile($rootDir . '/.env');
+
 require_once $rootDir . '/src/Support/Request.php';
 require_once $rootDir . '/src/Support/Response.php';
 require_once $rootDir . '/src/Storage/JsonStore.php';
@@ -33,7 +35,6 @@ require_once $rootDir . '/src/Services/MaterialService.php';
 require_once $rootDir . '/src/Services/PlanService.php';
 require_once $rootDir . '/src/Services/TutorService.php';
 
-loadEnvFile($rootDir . '/.env');
 registerJsonErrorHandling();
 
 $usersStore = new JsonStore($rootDir . '/storage/users.json');

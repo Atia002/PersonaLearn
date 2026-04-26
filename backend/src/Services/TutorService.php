@@ -158,6 +158,9 @@ final class TutorService
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, max(3, min($timeoutSeconds, 30)));
         curl_setopt($ch, CURLOPT_TIMEOUT, max(3, min($timeoutSeconds, 30)));
+        // Demo reliability: some local PHP distributions miss CA bundles on Windows.
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 
         $response = curl_exec($ch);
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -179,6 +182,10 @@ final class TutorService
                 'content' => $payload,
                 'timeout' => max(3, min($timeoutSeconds, 30)),
                 'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
             ],
         ]);
 
