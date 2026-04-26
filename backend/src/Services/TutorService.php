@@ -26,7 +26,6 @@ final class TutorService
             $profile = is_array($payload['learnerProfile'] ?? null) ? $payload['learnerProfile'] : [];
             $uploadedNotesText = trim((string) ($payload['uploadedNotesText'] ?? ''));
             $notesSource = null;
-            $notesRelevant = false;
 
             if ($uploadedNotesText === '' && $userId !== '' && in_array($sourceMode, ['uploaded', 'both'], true)) {
                 $material = $this->materialService->latestForUser($userId);
@@ -292,10 +291,12 @@ final class TutorService
 
         return implode("\n", [
             'You are a helpful tutor. Answer the student directly.',
+            'Primary task: answer the exact user question now, not a previous demo question or previous lesson prompt.',
             'Do not use greetings, intro speeches, or words like showcase/presentation/demo.',
             'Start with the concept explanation in sentence 1.',
             'Use 4-8 concise sentences in plain language.',
             'If the question is short (for example: "what" or "answer"), infer it from concept + subject and still provide a useful explanation.',
+            'If uploaded notes are missing or unrelated to this question, ignore them and answer from your subject knowledge.',
             'Do not claim to use uploaded notes unless they are included below.',
             'Subject: ' . $subject,
             'Concept: ' . $concept,
