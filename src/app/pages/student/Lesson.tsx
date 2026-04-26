@@ -27,7 +27,7 @@ import {
   ThumbsDown,
   Copy
 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import HobbyExampleCard from '../../components/HobbyExampleCard';
 import PersonaProfile from '../../components/PersonaProfile';
 import { useLearner } from '../../contexts/LearnerContext';
@@ -50,12 +50,21 @@ function normalizeSubjectId(rawSubject?: string): 'programming' | 'writing' | 's
 
 export default function Lesson() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { learner, updateLearner } = useLearner();
   const subjectId = normalizeSubjectId(learner?.subject);
   const subject = getSubjectData(subjectId);
-  const currentConcept = learner?.diagnosticWeakConcept || subject?.concepts.find((concept) => concept.status !== 'mastered')?.name || subject?.concepts[0]?.name || 'Variables';
-  const lessonTitle = subject?.lessons[0]?.title || 'Your Lesson';
-  const lessonDescription = subject?.lessons[0]?.description || 'This lesson is personalized to your selected subject and learning goals.';
+  const lessons = subject?.lessons || [];
+  const parsedLessonNumber = Number(id);
+  const indexedLesson = Number.isFinite(parsedLessonNumber) && parsedLessonNumber > 0
+    ? lessons[Math.min(Math.floor(parsedLessonNumber) - 1, Math.max(lessons.length - 1, 0))]
+    : undefined;
+  const currentLesson = indexedLesson || lessons[0];
+  const currentLessonIndex = lessons.findIndex((lesson) => lesson.id === currentLesson?.id);
+  const safeLessonIndex = currentLessonIndex >= 0 ? currentLessonIndex : 0;
+  const currentConcept = learner?.diagnosticWeakConcept || subject?.concepts[safeLessonIndex]?.name || subject?.concepts.find((concept) => concept.status !== 'mastered')?.name || subject?.concepts[0]?.name || 'Variables';
+  const lessonTitle = currentLesson?.title || 'Your Lesson';
+  const lessonDescription = currentLesson?.description || 'This lesson is personalized to your selected subject and learning goals.';
   const hobbyExample = subject?.hobbyExamples[0];
   const lessonContentBySubject: Record<'programming' | 'writing' | 'science', {
     keyConcepts: Array<{ title: string; detail: string; color: string }>;
@@ -159,6 +168,21 @@ export default function Lesson() {
   ]);
   const sourceModeLabel = sourceMode === 'official' ? 'official' : sourceMode === 'uploaded' ? 'uploaded' : 'both';
 
+  const hasPreviousLesson = safeLessonIndex > 0;
+  const hasNextLesson = safeLessonIndex < lessons.length - 1;
+
+  const goToLessonByIndex = (nextIndex: number) => {
+    const nextLesson = lessons[nextIndex];
+    if (!nextLesson) {
+      return;
+    }
+
+    updateLearner({
+      diagnosticWeakConcept: subject?.concepts[nextIndex]?.name || nextLesson.title,
+    });
+    navigate(`/lesson/${nextIndex + 1}`);
+  };
+
   const handleSendMessage = async (actionType: 'normal' | 'explain_simpler' | 'another_example' | 'use_hobby' | 'uploaded_only' = 'normal', promptOverride?: string) => {
     const questionText = (promptOverride || message).trim();
 
@@ -241,11 +265,11 @@ export default function Lesson() {
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span className="flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4" />
-                      Module 2 • Lesson 3
+                      Module {currentLesson?.moduleNumber || 1} • Lesson {currentLesson?.lessonNumber || safeLessonIndex + 1}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
-                      {subject?.lessons[0]?.duration || '~30 min'}
+                      {currentLesson?.duration || '~30 min'}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Target className="w-4 h-4" />
@@ -280,11 +304,22 @@ export default function Lesson() {
             </div>
             <Progress value={35} className="h-2.5" />
             <div className="flex justify-between mt-3">
-              <Button variant="outline" size="sm" className="rounded-xl">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                disabled={!hasPreviousLesson}
+                onClick={() => goToLessonByIndex(safeLessonIndex - 1)}
+              >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Previous Lesson
               </Button>
-              <Button size="sm" className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500">
+              <Button
+                size="sm"
+                className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500"
+                disabled={!hasNextLesson}
+                onClick={() => goToLessonByIndex(safeLessonIndex + 1)}
+              >
                 Next Lesson
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
