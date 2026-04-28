@@ -66,6 +66,195 @@ export default function Lesson() {
   const lessonTitle = currentLesson?.title || 'Your Lesson';
   const lessonDescription = currentLesson?.description || 'This lesson is personalized to your selected subject and learning goals.';
   const hobbyExample = subject?.hobbyExamples[0];
+  
+  // Lesson-specific content mapped by lesson ID
+  const lessonContentMap: Record<string, {
+    keyConcepts: Array<{ title: string; detail: string; color: string }>;
+    syntaxTitle: string;
+    syntaxSnippet: string;
+    practicePrompt: string;
+    practiceCta: string;
+    examples: Array<{ hobby: string; concept: string; example: string; code: string }>;
+    practiceComingSoon: string;
+  }> = {
+    'prog-1': {
+      keyConcepts: [
+        { title: 'Storage', detail: 'Variables hold data values', color: 'blue' },
+        { title: 'Data Types', detail: 'Different types: string, number, boolean', color: 'teal' },
+        { title: 'Assignment', detail: 'Use = to set or change a value', color: 'purple' },
+      ],
+      syntaxTitle: 'Variable Syntax',
+      syntaxSnippet: `// Declare and assign a variable\nlet playerName = "Hero";\nlet playerHealth = 100;\nlet isAlive = true;\n\n// Use variables\nconsole.log(playerName); // "Hero"\nplayerHealth = 90; // Change the value\nconsole.log(playerHealth); // 90\n\n// Different data types\nlet age = 25; // number\nlet name = "Alex"; // string\nlet isStudent = true; // boolean`,
+      practicePrompt: 'Create three variables: one for your favorite hobby name (string), your skill level 1-10 (number), and whether you\'re a beginner (boolean).',
+      practiceCta: 'Start Variables Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Variables',
+          example: 'Think of variables like a player\'s inventory slots. Each slot holds an item (value) and you can change what\'s inside.',
+          code: `let inventory = ["sword", "shield", "potion"];\nconsole.log(inventory[0]); // "sword"\ninventory[1] = "armor"; // Change shield to armor`,
+        },
+        {
+          hobby: 'music',
+          concept: 'Variables',
+          example: 'A variable for song volume is like a slider on your music player—it stores a number that can go up or down.',
+          code: `let volume = 50;\nlet songTitle = "My Favorite Song";\nconsole.log(\`Playing \${songTitle} at volume \${volume}\`);`,
+        },
+      ],
+      practiceComingSoon: 'Interactive coding challenges coming soon!',
+    },
+    'prog-2': {
+      keyConcepts: [
+        { title: 'Boolean Logic', detail: 'true/false decisions that drive choices', color: 'blue' },
+        { title: 'Comparison Operators', detail: '>, <, ===, !=== check relationships', color: 'teal' },
+        { title: 'Code Paths', detail: 'if/else selects which code runs', color: 'purple' },
+      ],
+      syntaxTitle: 'Conditional Syntax',
+      syntaxSnippet: `// Simple if statement\nif (playerHealth > 0) {\n  console.log("Player is alive!");\n}\n\n// if/else statement\nif (score >= 80) {\n  console.log("You won!");\n} else {\n  console.log("Try again!");\n}\n\n// if/else if/else chain\nif (age < 13) {\n  console.log("Child");\n} else if (age < 18) {\n  console.log("Teen");\n} else {\n  console.log("Adult");\n}`,
+      practicePrompt: 'Write a conditional that checks if a player score is above 100 and prints "High Score!" if true, otherwise "Keep Playing!"',
+      practiceCta: 'Start Conditionals Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Conditionals',
+          example: 'In games, conditionals decide outcomes: if enemy health < 0, the enemy dies; otherwise they stay alive.',
+          code: `let enemyHealth = 30;\nlet playerAttack = 50;\n\nif (playerAttack >= enemyHealth) {\n  console.log("Enemy defeated!");\n  enemyHealth = 0;\n} else {\n  console.log("Enemy survived!");\n  enemyHealth -= playerAttack;\n}`,
+        },
+        {
+          hobby: 'sports',
+          concept: 'Conditionals',
+          example: 'Think of game rules: if a ball is in the zone, score points; if it\'s out, no points.',
+          code: `let ballPosition = 85; // 0-100\n\nif (ballPosition >= 0 && ballPosition <= 100) {\n  console.log("In bounds - score counted!");\n} else {\n  console.log("Out of bounds - no score!");\n}`,
+        },
+      ],
+      practiceComingSoon: 'Interactive coding challenges coming soon!',
+    },
+    'prog-3': {
+      keyConcepts: [
+        { title: 'Repetition', detail: 'Run the same code multiple times', color: 'blue' },
+        { title: 'Loop Control', detail: 'for, while, forEach each work differently', color: 'teal' },
+        { title: 'Iteration Variable', detail: 'Track progress through the loop', color: 'purple' },
+      ],
+      syntaxTitle: 'Loop Syntax',
+      syntaxSnippet: `// for loop - best when you know the count\nfor (let i = 0; i < 5; i++) {\n  console.log(\`Iteration \${i}\`);\n}\n\n// while loop - best when condition is complex\nlet attempts = 0;\nwhile (attempts < 3) {\n  console.log(\`Try \${attempts + 1}\`);\n  attempts++;\n}\n\n// forEach - best for arrays\nlet items = ["sword", "shield", "potion"];\nitems.forEach((item) => {\n  console.log(item);\n});`,
+      practicePrompt: 'Write a for loop that prints numbers 1 through 10.',
+      practiceCta: 'Start Loops Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Loops',
+          example: 'In a game wave system, loops repeat enemy spawning: for each wave 1-5, spawn enemies.',
+          code: `for (let wave = 1; wave <= 5; wave++) {\n  let enemyCount = wave * 2;\n  console.log(\`Wave \${wave}: Spawn \${enemyCount} enemies\`);\n}`,
+        },
+        {
+          hobby: 'music',
+          concept: 'Loops',
+          example: 'A song verse repeats the same lyrics loop—loops let code do the same thing over again.',
+          code: `let verse = "Na na na na";\nfor (let i = 0; i < 4; i++) {\n  console.log(verse);\n}\n// Prints the verse 4 times`,
+        },
+      ],
+      practiceComingSoon: 'Interactive coding challenges coming soon!',
+    },
+    'prog-4': {
+      keyConcepts: [
+        { title: 'Reusability', detail: 'Write code once, use it many times', color: 'blue' },
+        { title: 'Parameters', detail: 'Pass data into functions to customize behavior', color: 'teal' },
+        { title: 'Return Values', detail: 'Get results back from your functions', color: 'purple' },
+      ],
+      syntaxTitle: 'Function Syntax',
+      syntaxSnippet: `// Define a function\nfunction greetPlayer(name) {\n  return "Welcome, " + name + "!";\n}\n\n// Use the function\nlet message = greetPlayer("Hero");\nconsole.log(message); // Output: "Welcome, Hero!"\n\n// Gaming example: Calculate damage\nfunction calculateDamage(baseDamage, criticalHit) {\n  if (criticalHit) {\n    return baseDamage * 2; // Double damage!\n  }\n  return baseDamage;\n}\n\nlet damage = calculateDamage(50, true);\nconsole.log(damage); // Output: 100`,
+      practicePrompt: 'Create a function called powerUp that increases a player\'s strength by 10 points.',
+      practiceCta: 'Start Practice Exercise',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Function Parameters',
+          example: 'Just like a character\'s attack can have different power levels, function parameters let you customize behavior.',
+          code: `function playerAttack(enemy, attackPower) {\n  enemy.health -= attackPower;\n  console.log(\`${'${enemy.name}'} took ${'${attackPower}'} damage!\`);\n}\n\nlet boss = { name: "Dragon", health: 500 };\nplayerAttack(boss, 75);`,
+        },
+        {
+          hobby: 'music',
+          concept: 'Return Values',
+          example: 'Think of a music equalizer that takes a volume level and returns the adjusted sound.',
+          code: `function adjustVolume(currentVolume, adjustment) {\n  let newVolume = currentVolume + adjustment;\n  if (newVolume > 100) return 100;\n  if (newVolume < 0) return 0;\n  return newVolume;\n}\n\nconsole.log(adjustVolume(50, 25)); // 75`,
+        },
+      ],
+      practiceComingSoon: 'Interactive coding challenges coming soon!',
+    },
+    'writ-1': {
+      keyConcepts: [
+        { title: 'Clear Argument', detail: 'State your main claim clearly', color: 'blue' },
+        { title: 'Focused Scope', detail: 'One main idea per thesis', color: 'teal' },
+        { title: 'Arguable Position', detail: 'Not a fact, but a debatable claim', color: 'purple' },
+      ],
+      syntaxTitle: 'Thesis Statement Structure',
+      syntaxSnippet: `Thesis = Your main argument + Reasons why\n\nWeak thesis: "School uniforms are a topic."\nStrong thesis: "School uniforms improve student focus and reduce social pressure by eliminating fashion-based distractions."\n\nTemplate:\n"[Subject] is [your stance] because [reasons]."\n\nExamples:\n✓ "Video games improve problem-solving skills because they require strategy and adaptive thinking."\n✓ "Social media should have stricter age limits to protect teenagers' mental health."\n✓ "Climate change requires immediate action to prevent irreversible environmental damage."`,
+      practicePrompt: 'Write one thesis statement on a topic you care about. Include your stance and at least one reason.',
+      practiceCta: 'Start Thesis Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Thesis Statement',
+          example: 'A thesis is like your game objective: one clear mission that guides every move.',
+          code: `Weak thesis: Gaming is popular.\nStrong thesis: Story-based games can improve reading comprehension because players analyze dialogue, infer meaning, and track complex plots.`,
+        },
+        {
+          hobby: 'music',
+          concept: 'Thesis Statement',
+          example: 'Like a song\'s chorus that repeats your main message, a thesis repeats your central claim.',
+          code: `Weak: "Music is important."\nStrong: "Music education in schools enhances academic performance by improving focus, memory, and creative thinking."`,
+        },
+      ],
+      practiceComingSoon: 'Interactive writing drills coming soon!',
+    },
+    'writ-2': {
+      keyConcepts: [
+        { title: 'Topic Sentence', detail: 'Introduces one main point', color: 'blue' },
+        { title: 'Supporting Evidence', detail: 'Facts, examples, or quotes that prove your point', color: 'teal' },
+        { title: 'Strong Structure', detail: 'Point → Evidence → Explanation → Link', color: 'purple' },
+      ],
+      syntaxTitle: 'Paragraph Model',
+      syntaxSnippet: `Paragraph structure:\n\n1) Topic Sentence:\n"Students who take breaks during study sessions retain information better."\n\n2) Evidence:\n"A 2024 study showed that students who took 5-minute breaks every 20 minutes improved recall by 23%."\n\n3) Explanation:\n"This suggests that rest allows the brain to consolidate new information into memory."\n\n4) Link to Thesis:\n"Therefore, break schedules are essential to effective study strategies."`,
+      practicePrompt: 'Write a 4-sentence paragraph: topic sentence, one piece of evidence, explanation, and link back to your thesis.',
+      practiceCta: 'Start Paragraph Practice',
+      examples: [
+        {
+          hobby: 'music',
+          concept: 'Paragraph Structure',
+          example: 'Like a song, a paragraph needs a clear opening line, supporting lines, and a strong close.',
+          code: `Topic sentence: Social media affects student focus in class.\nEvidence: A 2024 school survey found frequent phone use lowered quiz scores.\nExplanation: This suggests attention drops when notifications interrupt learning.\nLink: Therefore, phone limits can improve classroom concentration.`,
+        },
+      ],
+      practiceComingSoon: 'Interactive writing drills coming soon!',
+    },
+    'sci-1': {
+      keyConcepts: [
+        { title: 'Cause and Effect', detail: 'Forces cause changes in motion', color: 'blue' },
+        { title: 'Evidence First', detail: 'Use observations and data to justify claims', color: 'teal' },
+        { title: 'Model Thinking', detail: 'Use simple models to explain real-world behavior', color: 'purple' },
+      ],
+      syntaxTitle: 'Scientific Explanation Pattern',
+      syntaxSnippet: `Question: Why does a ball speed up when kicked harder?\n\nClaim: A stronger force increases acceleration.\nEvidence: In repeated trials, larger kick force produced higher speed.\nReasoning: By Newton\'s second law, more net force causes greater acceleration.\n\nFormula reminder: F = m * a\n\nComplete answer:\n"When a larger force is applied, acceleration increases because force directly causes acceleration (F=ma). In our experiment, a 50N kick produced twice the speed of a 25N kick."`,
+      practicePrompt: 'Choose one everyday motion example and explain it using claim, evidence, and reasoning.',
+      practiceCta: 'Start Science Practice',
+      examples: [
+        {
+          hobby: 'gaming',
+          concept: 'Forces and Motion',
+          example: 'In racing games, a boost applies extra force so your car accelerates faster.',
+          code: `Observation: Boost activated → speed rises quickly.\nConcept: Extra force changes velocity.\nConclusion: Greater applied force means greater acceleration (if mass is constant).`,
+        },
+        {
+          hobby: 'sports',
+          concept: 'Scientific Method',
+          example: 'You can test which running shoe gives better sprint time by controlling distance and surface.',
+          code: `Question: Which shoe improves sprint speed?\nHypothesis: Shoe A reduces sprint time.\nTest: Run 5 timed trials per shoe on same track.\nResult: Compare average times.`,
+        },
+      ],
+      practiceComingSoon: 'Interactive science investigations coming soon!',
+    },
+  };
+
   const lessonContentBySubject: Record<'programming' | 'writing' | 'science', {
     keyConcepts: Array<{ title: string; detail: string; color: string }>;
     syntaxTitle: string;
@@ -154,7 +343,9 @@ export default function Lesson() {
       practiceComingSoon: 'Interactive science investigations coming soon!',
     },
   };
-  const activeLessonContent = lessonContentBySubject[subjectId];
+  
+  // Use lesson-specific content if available, otherwise fall back to subject default
+  const activeLessonContent = lessonContentMap[currentLesson?.id || ''] || lessonContentBySubject[subjectId];
   const [message, setMessage] = useState('');
   const [sourceMode, setSourceMode] = useState<'official' | 'uploaded' | 'both'>('both');
   const [sending, setSending] = useState(false);
